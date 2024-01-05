@@ -8,6 +8,8 @@ class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
 class UCameraComponent;
+class USceneComponent;
+class UMagicCircleComponent;
 
 struct FInputActionInstance;
 
@@ -19,8 +21,24 @@ class ELEMENT_API ABasePlayer : public ABaseCharacter
 public:
 	ABasePlayer();
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
+
+	UPROPERTY(EditAnywhere);
+	TSubclassOf<AActor> Test;
+
+	UPROPERTY(EditAnywhere);
+	UMagicCircleComponent* MagicCircleComponent;
+
+protected:
+	void Move(const FInputActionInstance& Instance);
+	void Look(const FInputActionInstance& Instance);
+
+
+	/*
+	* 키 설정
+	*/
 	UPROPERTY(EditAnywhere, Category = Input);
 	UInputMappingContext* KBMMappingContext = nullptr;
 
@@ -33,16 +51,18 @@ public:
 	UPROPERTY(EditAnywhere, Category = Input);
 	UInputAction* JumpAction = nullptr;
 
-protected:
-	void Move(const FInputActionInstance& Instance);
-	void Look(const FInputActionInstance& Instance);
-
-private:
-
-
+	/*
+	* 카메라 설정
+	*/
 	UPROPERTY(VisibleAnywhere);
 	USpringArmComponent* SpringArm;
 
 	UPROPERTY(VisibleAnywhere);
 	UCameraComponent* ViewCamera;
+
+	/*
+	* 전투 시스템
+	*/
+
+private:
 };

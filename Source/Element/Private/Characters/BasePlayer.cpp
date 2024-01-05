@@ -3,8 +3,15 @@
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/SceneComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
-ABasePlayer::ABasePlayer()
+#include "Element/DebugMacro.h"
+#include "Projectiles/BaseProjectile.h"
+#include "Components/MagicCircleComponent.h"
+
+ABasePlayer::ABasePlayer() : ABaseCharacter()
 {
 	// 카메라 설정
 	bUseControllerRotationYaw = false;
@@ -16,7 +23,11 @@ ABasePlayer::ABasePlayer()
 	SpringArm->bUsePawnControlRotation = true;
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(SpringArm);
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 600.f, 0.f);
 
+	MagicCircleComponent = CreateDefaultSubobject<UMagicCircleComponent>(TEXT("MagicCircle"));
+	MagicCircleComponent->SetupAttachment(ViewCamera);
 }
 
 void ABasePlayer::BeginPlay()
@@ -33,6 +44,21 @@ void ABasePlayer::BeginPlay()
 			Subsystem->AddMappingContext(KBMMappingContext, 0);
 		}
 	}
+}
+
+void ABasePlayer::Tick(float DeltaTime)
+{
+
+	FVector LineStart = GetActorLocation();
+	FRotator CameraRot = GetController()->GetControlRotation();
+	FVector CameraForwardDirection = FRotationMatrix(CameraRot).TransformVector(FVector::XAxisVector);
+	FVector LineEnd = GetActorLocation() + CameraForwardDirection * 100;
+	// SCREEN_LOG(0, LineStart.ToString());
+	// SCREEN_LOG(1, LineEnd.ToString());
+	// // DRAW_SPHERE_SingleFrame(LineStart);
+	// DRAW_SPHERE_SingleFrame(LineEnd);
+	// DRAW_LINE_SingleFrame(LineStart + FVector(-50, 0, 100), LineEnd + FVector(- 50, 0, 100));
+
 }
 
 void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

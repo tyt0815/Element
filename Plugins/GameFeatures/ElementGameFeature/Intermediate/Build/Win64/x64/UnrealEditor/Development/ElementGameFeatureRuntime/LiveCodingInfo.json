@@ -1,0 +1,8 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.ElementGameFeatureRuntime.cpp.obj": [
+			"ElementGameFeatureRuntimeModule.cpp.obj"
+		]
+	}
+}
