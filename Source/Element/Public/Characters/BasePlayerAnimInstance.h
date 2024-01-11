@@ -15,8 +15,11 @@ class ELEMENT_API UBasePlayerAnimInstance : public UAnimInstance
 public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
-	bool IsMove();
 
+	/*
+	* Movement
+	*/
+protected:
 	UPROPERTY(BlueprintReadOnly, Category = Movement);
 	ABasePlayer* PlayerCharacter;
 
@@ -34,4 +37,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement);
 	bool IsFalling;
+
+private:
+	bool IsMove();
 };

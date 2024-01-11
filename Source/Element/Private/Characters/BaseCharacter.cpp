@@ -1,4 +1,5 @@
 #include "Characters/BaseCharacter.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -7,16 +8,9 @@ ABaseCharacter::ABaseCharacter()
 
 }
 
-void ABaseCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -25,3 +19,8 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 }
 
+void ABaseCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	
+}

@@ -6,10 +6,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SceneComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "GameFramework/Controller.h"
 
 #include "Element/DebugMacro.h"
-#include "Projectiles/BaseProjectile.h"
-#include "Components/MagicCircleComponent.h"
+#include "Magic/MagicCircle.h"
+#include "Magic/BaseMagic.h"
 
 ABasePlayer::ABasePlayer() : ABaseCharacter()
 {
@@ -24,10 +25,29 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(SpringArm);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 600.f, 0.f);
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 1000.f, 0.f);
+}
 
-	MagicCircleComponent = CreateDefaultSubobject<UMagicCircleComponent>(TEXT("MagicCircle"));
-	MagicCircleComponent->SetupAttachment(ViewCamera);
+void ABasePlayer::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	if (Input != nullptr)
+	{
+		Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABasePlayer::Move);
+		Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABasePlayer::Look);
+		Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		Input->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+		Input->BindAction(AttackAction, ETriggerEvent::Ongoing, this, &ABasePlayer::AttackOngoing);
+
+		Input->BindAction(CastAction, ETriggerEvent::Ongoing, this, &ABasePlayer::CastOngoing);
+	}
 }
 
 void ABasePlayer::BeginPlay()
@@ -43,34 +63,6 @@ void ABasePlayer::BeginPlay()
 		{
 			Subsystem->AddMappingContext(KBMMappingContext, 0);
 		}
-	}
-}
-
-void ABasePlayer::Tick(float DeltaTime)
-{
-
-	FVector LineStart = GetActorLocation();
-	FRotator CameraRot = GetController()->GetControlRotation();
-	FVector CameraForwardDirection = FRotationMatrix(CameraRot).TransformVector(FVector::XAxisVector);
-	FVector LineEnd = GetActorLocation() + CameraForwardDirection * 100;
-	// SCREEN_LOG(0, LineStart.ToString());
-	// SCREEN_LOG(1, LineEnd.ToString());
-	// // DRAW_SPHERE_SingleFrame(LineStart);
-	// DRAW_SPHERE_SingleFrame(LineEnd);
-	// DRAW_LINE_SingleFrame(LineStart + FVector(-50, 0, 100), LineEnd + FVector(- 50, 0, 100));
-
-}
-
-void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PlayerInputComponent);
-	if (Input != nullptr)
-	{
-		Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABasePlayer::Move);
-		Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABasePlayer::Look);
-		Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
-		Input->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	}
 }
 
@@ -97,5 +89,93 @@ void ABasePlayer::Look(const FInputActionInstance& Instance)
 	{
 		AddControllerYawInput(LookVector.X);
 		AddControllerPitchInput(LookVector.Y);
+	}
+}
+
+void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
+{
+	if (GetWorldTimerManager().GetTimerRemaining(MagicBulletTimer) < 0)
+	{
+		FVector OffsetVector;
+		OffsetVector.X = FMath::RandRange(-MagicBulletLocationOffset.X, MagicBulletLocationOffset.X);
+		OffsetVector.Y = FMath::RandRange(-MagicBulletLocationOffset.Y, MagicBulletLocationOffset.Y);
+		OffsetVector.Z = FMath::RandRange(-MagicBulletLocationOffset.Z, MagicBulletLocationOffset.Z);
+		FVector SpawnLocation = GetFlyMagicCircleLocation(OffsetVector);
+		FRotator SpawnRotator = GetFlyMagicCircleRotator();
+		ActivateMagicCircle(SpawnLocation, SpawnRotator, MagicBulletCircleClass, MagicBulletClass);
+		GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
+	}
+
+}
+
+void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
+{
+
+}
+
+FVector ABasePlayer::GetCameraLookAtLocation()
+{
+	return ViewCamera->GetComponentLocation() + (ViewCamera->GetForwardVector() * LookAtOffset); 
+}
+
+FVector ABasePlayer::GetFlyMagicCircleLocation(FVector& Offset)
+{
+	FRotator Rotator = GetFlyMagicCircleRotator();
+	FVector x = FInverseRotationMatrix(Rotator).GetUnitAxis(EAxis::X);
+	FVector y = FInverseRotationMatrix(Rotator).GetUnitAxis(EAxis::Y);
+	FVector z = FInverseRotationMatrix(Rotator).GetUnitAxis(EAxis::Z);
+	FVector Start = GetMagicCircleMiddlePointLocation();
+	return Start + (x * Offset.X) + (y * Offset.Y) + (z * Offset.Z);
+}
+
+FRotator ABasePlayer::GetFlyMagicCircleRotator()
+{
+	FVector x = GetCameraLookAtLocation() - GetMagicCircleMiddlePointLocation();
+	FVector y = ViewCamera->GetRightVector();
+	FVector z = x.Cross(y);
+	y = z.Cross(x);
+	FMatrix RotationMatrix(x, y, z, FVector::ZeroVector);
+	FRotator Rotator = RotationMatrix.Rotator();
+	return Rotator;
+}
+
+FVector ABasePlayer::GetMagicCircleMiddlePointLocation()
+{
+	FVector Start = GetActorLocation() + FVector(0, 0, MagicCircleMiddlePointOffset.Z);
+	FVector x = GetCameraLookAtLocation() - Start;
+	x.Normalize();
+	FVector y = ViewCamera->GetRightVector();
+	FVector z = x.Cross(y);
+	y = z.Cross(x);
+	return Start + x * MagicCircleMiddlePointOffset.X;
+}
+
+void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, const TSubclassOf<AMagicCircle>& MagicCircleClass, TSubclassOf<ABaseMagic> MagicClass)
+{
+	AMagicCircle* MagicCircle = nullptr;
+	UWorld* World = GetWorld();
+	if (World && MagicCircleClass)
+	{
+		MagicCircle = World->SpawnActor<AMagicCircle>(MagicCircleClass, Location, Rotator);
+		if (MagicCircle != nullptr)
+		{
+			MagicCircle->SetOwner(this);
+			MagicCircle->Activate(Location, Rotator);
+		}
+	}
+
+	SpawnMagicActor(Location, Rotator, MagicClass);
+}
+
+void ABasePlayer::SpawnMagicActor(UPARAM(ref)FVector& Location, UPARAM(ref)FRotator& Rotator, TSubclassOf<ABaseMagic> MagicClass)
+{
+	UWorld* World = GetWorld();
+	if (World != nullptr && MagicClass != nullptr)
+	{
+		ABaseMagic* Magic = World->SpawnActor<ABaseMagic>(MagicClass, Location, Rotator);
+		if (Magic != nullptr)
+		{
+			Magic->SetOwner(this);
+		}
 	}
 }
