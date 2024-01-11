@@ -25,12 +25,13 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(SpringArm);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 1000.f, 0.f);
 }
 
 void ABasePlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	ZoomOutCamera();
 }
 
 void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -45,9 +46,11 @@ void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		Input->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		Input->BindAction(AttackAction, ETriggerEvent::Ongoing, this, &ABasePlayer::AttackOngoing);
+		Input->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ABasePlayer::AttackTriggered);
 
 		Input->BindAction(CastAction, ETriggerEvent::Ongoing, this, &ABasePlayer::CastOngoing);
 	}
+	
 }
 
 void ABasePlayer::BeginPlay()
@@ -64,6 +67,9 @@ void ABasePlayer::BeginPlay()
 			Subsystem->AddMappingContext(KBMMappingContext, 0);
 		}
 	}
+
+	OriginSpringArmLength = SpringArm->TargetArmLength;
+	OriginCameraLocation = ViewCamera->GetRelativeLocation();
 }
 
 void ABasePlayer::Move(const FInputActionInstance& Instance)
@@ -94,6 +100,7 @@ void ABasePlayer::Look(const FInputActionInstance& Instance)
 
 void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 {
+	ZoomInCamera();
 	if (GetWorldTimerManager().GetTimerRemaining(MagicBulletTimer) < 0)
 	{
 		FVector OffsetVector;
@@ -105,7 +112,12 @@ void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 		ActivateMagicCircle(SpawnLocation, SpawnRotator, MagicBulletRange, MagicBulletCircleClass);
 		GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
 	}
+}
 
+void ABasePlayer::AttackTriggered(const FInputActionInstance& Instance)
+{
+	SCREEN_LOG(0, "AttackTriggered");
+	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 }
 
 void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
@@ -116,6 +128,42 @@ void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
 FVector ABasePlayer::GetCameraLookAtLocation()
 {
 	return ViewCamera->GetComponentLocation() + (ViewCamera->GetForwardVector() * LookAtOffset); 
+}
+
+float ABasePlayer::GetSpringArmVelocity()
+{
+	return (OriginSpringArmLength - ZoomSpringArmLength) * CameraMoveRate;
+}
+
+FVector ABasePlayer::GetCameraVelocity()
+{
+	return (OriginCameraLocation - ZoomCameraLocation) * CameraMoveRate;
+}
+
+void ABasePlayer::ZoomOutCamera()
+{
+	if (PlayerActionState != EPlayerActionState::EPAS_Casting)
+	{
+		float SpringArmSpeed = GetSpringArmVelocity();
+		FVector CameraSpeed = GetCameraVelocity();
+		SpringArm->TargetArmLength = FMath::Clamp(SpringArm->TargetArmLength + SpringArmSpeed, ZoomSpringArmLength, OriginSpringArmLength);
+		ViewCamera->SetRelativeLocation(VectorClamp(ViewCamera->GetRelativeLocation() + CameraSpeed, ZoomCameraLocation, OriginCameraLocation));
+		GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		bUseControllerRotationYaw = false;
+	}
+}
+
+void ABasePlayer::ZoomInCamera()
+{
+	PlayerActionState = EPlayerActionState::EPAS_Casting;
+	float SpringArmSpeed = GetSpringArmVelocity();
+	FVector CameraSpeed = GetCameraVelocity();
+	SpringArm->TargetArmLength = FMath::Clamp(SpringArm->TargetArmLength - SpringArmSpeed, ZoomSpringArmLength, OriginSpringArmLength);
+	ViewCamera->SetRelativeLocation(VectorClamp(ViewCamera->GetRelativeLocation() - CameraSpeed, ZoomCameraLocation, OriginCameraLocation));
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	bUseControllerRotationYaw = true;
 }
 
 FVector ABasePlayer::GetFlyMagicCircleLocation(FVector& Offset)

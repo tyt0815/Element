@@ -39,5 +39,4 @@ void ABaseMagicProjectile::Activate_Implementation(FVector Location, FRotator Ro
 void ABaseMagicProjectile::Deactivate_Implementation()
 {
 	Super::Deactivate_Implementation();
-	SCREEN_LOG(0, FString::SanitizeFloat(MagicRange));
 }

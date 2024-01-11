@@ -26,12 +26,13 @@ protected:
 	virtual void BeginPlay() override;
 
 	/*
-	* 키
+	* 기본 Movement, Input
 	*/
 private:	
 	void Move(const FInputActionInstance& Instance);
 	void Look(const FInputActionInstance& Instance);
 	void AttackOngoing(const FInputActionInstance& Instance);
+	void AttackTriggered(const FInputActionInstance& Instance);
 	void CastOngoing(const FInputActionInstance& Instance);
 
 	UPROPERTY(EditAnywhere, Category = "Input | InputMappingContext");
@@ -52,22 +53,44 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* CastAction = nullptr;
 
+	UPROPERTY(EditAnywhere, Category = "Locomotion");
+	float WalkSpeed;
+	
+	UPROPERTY(EditAnywhere, Category = "Locomotion");
+	float RunSpeed;
+
 	/*
 	* 카메라
 	*/
 public:
 	FVector GetCameraLookAtLocation();
+	float GetSpringArmVelocity();
+	FVector GetCameraVelocity();
 
 private:
+	void ZoomOutCamera();
+	void ZoomInCamera();
 
-	UPROPERTY(VisibleAnywhere, Category = "Camera");
+	UPROPERTY(VisibleAnywhere, Category = "View");
 	USpringArmComponent* SpringArm;
 
-	UPROPERTY(VisibleAnywhere, Category = "Camera");
+	UPROPERTY(VisibleAnywhere, Category = "View");
 	UCameraComponent* ViewCamera;
 
-	UPROPERTY(VisibleAnywhere, Category = "Camera");
-	float LookAtOffset = 3000.0f;
+	UPROPERTY(VisibleAnywhere, Category = "View");
+	float LookAtOffset = 5000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "View");
+	float ZoomSpringArmLength;
+
+	UPROPERTY(EditAnywhere, Category = "View");
+	FVector ZoomCameraLocation;
+
+	UPROPERTY(EditAnywhere, Category = "View");
+	float CameraMoveRate = 0.1;
+
+	float OriginSpringArmLength;
+	FVector OriginCameraLocation;
 
 	/*
 	* 전투 시스템
@@ -97,4 +120,6 @@ private:
 	float MagicBulletRange = 2000.0f;
 
 	FTimerHandle MagicBulletTimer;
+	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
+	EPlayerCastedMagic PlayerCastedMagic = EPlayerCastedMagic::EPCM_None;
 };

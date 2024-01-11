@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "CharacterTypes.h"
 #include "BaseCharacter.generated.h"
 
 UCLASS()
@@ -16,4 +17,10 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	/*
+	* Math
+	*/
+protected:
+	FVector VectorClamp(const FVector& Vector, const FVector& MinVector, const FVector& MaxVector);
 };
