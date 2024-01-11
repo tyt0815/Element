@@ -20,9 +20,9 @@ protected:
 	/*
 	* Projectile Attribute
 	*/
-protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite);
-	float MagicRange = 5000.0f;
+public:
+	virtual void Activate_Implementation(FVector Location, FRotator Rotator, float Range);
+	virtual void Deactivate_Implementation();
 
 private:
 	UPROPERTY(VisibleAnywhere);

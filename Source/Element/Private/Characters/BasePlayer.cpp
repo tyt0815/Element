@@ -102,7 +102,7 @@ void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 		OffsetVector.Z = FMath::RandRange(-MagicBulletLocationOffset.Z, MagicBulletLocationOffset.Z);
 		FVector SpawnLocation = GetFlyMagicCircleLocation(OffsetVector);
 		FRotator SpawnRotator = GetFlyMagicCircleRotator();
-		ActivateMagicCircle(SpawnLocation, SpawnRotator, MagicBulletCircleClass, MagicBulletClass);
+		ActivateMagicCircle(SpawnLocation, SpawnRotator, MagicBulletRange, MagicBulletCircleClass);
 		GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
 	}
 
@@ -150,7 +150,7 @@ FVector ABasePlayer::GetMagicCircleMiddlePointLocation()
 	return Start + x * MagicCircleMiddlePointOffset.X;
 }
 
-void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, const TSubclassOf<AMagicCircle>& MagicCircleClass, TSubclassOf<ABaseMagic> MagicClass)
+void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass)
 {
 	AMagicCircle* MagicCircle = nullptr;
 	UWorld* World = GetWorld();
@@ -160,22 +160,7 @@ void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, const 
 		if (MagicCircle != nullptr)
 		{
 			MagicCircle->SetOwner(this);
-			MagicCircle->Activate(Location, Rotator);
-		}
-	}
-
-	SpawnMagicActor(Location, Rotator, MagicClass);
-}
-
-void ABasePlayer::SpawnMagicActor(UPARAM(ref)FVector& Location, UPARAM(ref)FRotator& Rotator, TSubclassOf<ABaseMagic> MagicClass)
-{
-	UWorld* World = GetWorld();
-	if (World != nullptr && MagicClass != nullptr)
-	{
-		ABaseMagic* Magic = World->SpawnActor<ABaseMagic>(MagicClass, Location, Rotator);
-		if (Magic != nullptr)
-		{
-			Magic->SetOwner(this);
+			MagicCircle->Activate(Location, Rotator, Range);
 		}
 	}
 }

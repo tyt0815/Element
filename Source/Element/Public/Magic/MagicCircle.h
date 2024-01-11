@@ -25,14 +25,20 @@ protected:
 	*/
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Magic Circle")
-	void Activate(FVector Location, FRotator Rotator);
-	virtual void Activate_Implementation(FVector Location, FRotator Rotator);
+	void Activate(FVector Location, FRotator Rotator, float Range);
+	virtual void Activate_Implementation(FVector Location, FRotator Rotator, float Range);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Magic Circle")
 	void Deactivate(UNiagaraComponent* NiagaraComponent);
 	virtual void Deactivate_Implementation(UNiagaraComponent* NiagaraComponent);
 
+	UFUNCTION(BlueprintCallable, Category = "Magic Circle")
+	void SpawnMagicActor(UPARAM(ref) FVector& Location, UPARAM(ref) FRotator& Rotator, float Range);
+
 private:
 	UPROPERTY(EditAnywhere, Category = MagicCircle);
 	UNiagaraComponent* MagicCircle;
+
+	UPROPERTY(EditAnywhere, Category = MagicCircle);
+	TSubclassOf<ABaseMagic> MagicClass;
 };

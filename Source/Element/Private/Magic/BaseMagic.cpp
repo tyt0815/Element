@@ -22,3 +22,12 @@ void ABaseMagic::BeginPlay()
 	Super::BeginPlay();
 	HitBoxComponent->IgnoreActorWhenMoving(GetOwner(), true);
 }
+
+void ABaseMagic::Activate_Implementation(FVector Location, FRotator Rotator, float Range)
+{
+}
+
+void ABaseMagic::Deactivate_Implementation()
+{
+	Destroy();
+}

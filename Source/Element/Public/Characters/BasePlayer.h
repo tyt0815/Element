@@ -78,13 +78,7 @@ public:
 	FVector GetMagicCircleMiddlePointLocation();
 
 	UFUNCTION(BlueprintCallable, Category = "Magic")
-	void ActivateMagicCircle(FVector Location, FRotator Rotator, const TSubclassOf<AMagicCircle>& MagicCircleClass, TSubclassOf<ABaseMagic> MagicClass);
-
-	UFUNCTION(BlueprintCallable, Category = "Magic")
-	void SpawnMagicActor(UPARAM(ref) FVector& Location, UPARAM(ref) FRotator& Rotator, TSubclassOf<ABaseMagic> MagicClass);
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Magic | Magic Bullet");
-	float MagicBulletRange = 2000.0f;
+	void ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass);
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Magic");
@@ -100,7 +94,7 @@ private:
 	TSubclassOf<AMagicCircle> MagicBulletCircleClass;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
-	TSubclassOf<ABaseMagic> MagicBulletClass;
+	float MagicBulletRange = 2000.0f;
 
 	FTimerHandle MagicBulletTimer;
 };
