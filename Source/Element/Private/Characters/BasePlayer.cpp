@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SceneComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/Controller.h"
 
 #include "Element/DebugMacro.h"
@@ -25,6 +26,9 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(SpringArm);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	InitCurrentElements(EPlayerElement::EPET_Ignis, EPlayerElement::EPET_Aqua, EPlayerElement::EPET_Ventus, EPlayerElement::EPET_Terra);
+	InitElementsReadyQ(EPlayerElement::EPET_Ignis, EPlayerElement::EPET_Aqua, EPlayerElement::EPET_Ventus, EPlayerElement::EPET_Terra);
 }
 
 void ABasePlayer::Tick(float DeltaTime)
@@ -49,6 +53,7 @@ void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		Input->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ABasePlayer::AttackTriggered);
 
 		Input->BindAction(CastAction, ETriggerEvent::Ongoing, this, &ABasePlayer::CastOngoing);
+		Input->BindAction(CastAction, ETriggerEvent::Triggered, this, &ABasePlayer::CastTriggered);
 	}
 	
 }
@@ -101,14 +106,15 @@ void ABasePlayer::Look(const FInputActionInstance& Instance)
 void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 {
 	ZoomInCamera();
+	// MagicBullet
 	if (GetWorldTimerManager().GetTimerRemaining(MagicBulletTimer) < 0)
 	{
 		FVector OffsetVector;
-		OffsetVector.X = FMath::RandRange(-MagicBulletLocationOffset.X, MagicBulletLocationOffset.X);
+		OffsetVector.X = MagicBulletLocationOffset.X;
 		OffsetVector.Y = FMath::RandRange(-MagicBulletLocationOffset.Y, MagicBulletLocationOffset.Y);
 		OffsetVector.Z = FMath::RandRange(-MagicBulletLocationOffset.Z, MagicBulletLocationOffset.Z);
-		FVector SpawnLocation = GetFlyMagicCircleLocation(OffsetVector);
-		FRotator SpawnRotator = GetFlyMagicCircleRotator();
+		FVector SpawnLocation = GetMagicCircleMiddlePointLocation(OffsetVector);
+		FRotator SpawnRotator = GetMagicCircleRotator();
 		ActivateMagicCircle(SpawnLocation, SpawnRotator, MagicBulletRange, MagicBulletCircleClass);
 		GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
 	}
@@ -116,13 +122,31 @@ void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 
 void ABasePlayer::AttackTriggered(const FInputActionInstance& Instance)
 {
-	SCREEN_LOG(0, "AttackTriggered");
 	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 }
 
 void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
 {
+	ZoomInCamera();
+	FVector FloorLocation;
+	if (FindFloorMagicCircleLocation(GetMagicCircleMiddlePointLocation(FVector(GetCastableRange(MagicCircleRange), 0, 0)), FloorLocation))
+	{
+		DRAW_SPHERE_SINGLE_FRAME(FloorLocation);
+	}
+}
 
+void ABasePlayer::CastTriggered(const FInputActionInstance& Instance)
+{
+	ZoomOutCamera();
+	FVector Offset(GetCastableRange(MagicCircleRange), 0, 0);
+	FVector FlyLocation = GetMagicCircleMiddlePointLocation(Offset);
+	FVector FloorLocation;
+	if(FindFloorMagicCircleLocation(GetMagicCircleMiddlePointLocation(FVector(GetCastableRange(MagicCircleRange), 0, 0)), FloorLocation))
+	{
+		DRAW_SPHERE_COLOR(FloorLocation, FColor::Green);
+	}
+
+	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 }
 
 FVector ABasePlayer::GetCameraLookAtLocation()
@@ -147,7 +171,7 @@ void ABasePlayer::ZoomOutCamera()
 		float SpringArmSpeed = GetSpringArmVelocity();
 		FVector CameraSpeed = GetCameraVelocity();
 		SpringArm->TargetArmLength = FMath::Clamp(SpringArm->TargetArmLength + SpringArmSpeed, ZoomSpringArmLength, OriginSpringArmLength);
-		ViewCamera->SetRelativeLocation(VectorClamp(ViewCamera->GetRelativeLocation() + CameraSpeed, ZoomCameraLocation, OriginCameraLocation));
+		ViewCamera->SetRelativeLocation(VectorClamp(ViewCamera->GetRelativeLocation() + CameraSpeed, OriginCameraLocation, ZoomCameraLocation));
 		GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		bUseControllerRotationYaw = false;
@@ -160,23 +184,34 @@ void ABasePlayer::ZoomInCamera()
 	float SpringArmSpeed = GetSpringArmVelocity();
 	FVector CameraSpeed = GetCameraVelocity();
 	SpringArm->TargetArmLength = FMath::Clamp(SpringArm->TargetArmLength - SpringArmSpeed, ZoomSpringArmLength, OriginSpringArmLength);
-	ViewCamera->SetRelativeLocation(VectorClamp(ViewCamera->GetRelativeLocation() - CameraSpeed, ZoomCameraLocation, OriginCameraLocation));
+	ViewCamera->SetRelativeLocation(VectorClamp(ViewCamera->GetRelativeLocation() - CameraSpeed, OriginCameraLocation, ZoomCameraLocation));
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	bUseControllerRotationYaw = true;
 }
 
-FVector ABasePlayer::GetFlyMagicCircleLocation(FVector& Offset)
+/*
+ActorLocation에서 Z축방향으로 어느정도 더한 위치(Chest쯤)
+*/
+FVector ABasePlayer::GetMagicCircleMiddlePointLocation()
 {
-	FRotator Rotator = GetFlyMagicCircleRotator();
-	FVector x = FInverseRotationMatrix(Rotator).GetUnitAxis(EAxis::X);
-	FVector y = FInverseRotationMatrix(Rotator).GetUnitAxis(EAxis::Y);
-	FVector z = FInverseRotationMatrix(Rotator).GetUnitAxis(EAxis::Z);
+	return GetActorLocation() + FVector(0, 0, MagicCircleMiddlePointOffset);
+}
+
+/*
+ActorLocation에서 Z축방향으로 어느정도 더한 위치(Chest쯤)에서 LookAt방향으로 Offset만큼 더한 위치(LookAt - Chest벡터를 x축으로 하는 좌표계 기준)
+*/
+FVector ABasePlayer::GetMagicCircleMiddlePointLocation(FVector Offset)
+{
+	FRotator Rotator = GetMagicCircleRotator();
+	FVector x = UKismetMathLibrary::GetForwardVector(Rotator);
+	FVector y = UKismetMathLibrary::GetRightVector(Rotator);
+	FVector z = UKismetMathLibrary::GetUpVector(Rotator);
 	FVector Start = GetMagicCircleMiddlePointLocation();
 	return Start + (x * Offset.X) + (y * Offset.Y) + (z * Offset.Z);
 }
 
-FRotator ABasePlayer::GetFlyMagicCircleRotator()
+FRotator ABasePlayer::GetMagicCircleRotator()
 {
 	FVector x = GetCameraLookAtLocation() - GetMagicCircleMiddlePointLocation();
 	FVector y = ViewCamera->GetRightVector();
@@ -187,15 +222,75 @@ FRotator ABasePlayer::GetFlyMagicCircleRotator()
 	return Rotator;
 }
 
-FVector ABasePlayer::GetMagicCircleMiddlePointLocation()
+float ABasePlayer::GetCastableRange(float Range)
 {
-	FVector Start = GetActorLocation() + FVector(0, 0, MagicCircleMiddlePointOffset.Z);
-	FVector x = GetCameraLookAtLocation() - Start;
-	x.Normalize();
-	FVector y = ViewCamera->GetRightVector();
-	FVector z = x.Cross(y);
-	y = z.Cross(x);
-	return Start + x * MagicCircleMiddlePointOffset.X;
+	FVector LineStart = GetMagicCircleMiddlePointLocation();
+	FVector Offset(Range, 0, 0);
+	FVector LineEnd = GetMagicCircleMiddlePointLocation(Offset);
+	TArray<AActor*> ActorsToIgnore;
+	FHitResult HitResult;
+	UKismetSystemLibrary::LineTraceSingle(
+		this,
+		LineStart,
+		LineEnd,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::ForOneFrame,
+		HitResult,
+		true
+	);
+	if (HitResult.GetActor() != nullptr)
+	{
+		return (HitResult.Location - LineStart).Size();
+	}
+	return Range;
+}
+
+void ABasePlayer::InitCurrentElements(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth)
+{
+	CurrentElements.Add(First);
+	CurrentElements.Add(Second);
+	CurrentElements.Add(Third);
+	CurrentElements.Add(Forth);
+}
+
+void ABasePlayer::InitElementsReadyQ(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth)
+{
+	ElementsReadyQ.Enqueue(First);
+	ElementsReadyQ.Enqueue(Second);
+	ElementsReadyQ.Enqueue(Third);
+	ElementsReadyQ.Enqueue(Forth);
+}
+
+bool ABasePlayer::FindFloorMagicCircleLocation(FVector FlyLocation, FVector& FloorLocation)
+{
+	FVector Offset(0, 0, 0);
+	FVector Start = GetMagicCircleMiddlePointLocation(Offset) - FVector(0, 0, 25.0f);
+	FVector End = FlyLocation - FVector(0, 0, 25.0f);
+	TArray<AActor*> ActorsToIgnore;
+	FHitResult HitResult;
+	UKismetSystemLibrary::BoxTraceSingle(
+		this,
+		Start,
+		End,
+		FVector(0, 0, 25),
+		FRotator::ZeroRotator,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::ForOneFrame,
+		HitResult,
+		true
+	);
+	bool IsFloor = HitResult.Normal.Dot(FVector::ZAxisVector) <  1 / FMath::Sqrt(2.0f) ? false : true;
+	if (HitResult.GetActor() != nullptr && IsFloor)
+	{
+		FloorLocation = HitResult.ImpactPoint;
+		return true;
+	}
+
+	return false;
 }
 
 void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass)

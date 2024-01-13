@@ -31,8 +31,7 @@ void AMagicCircle::Activate_Implementation(FVector Location, FRotator Rotator, f
 		this->SetActorLocation(Location);
 		this->SetActorRotation(Rotator);
 	}
-
-	SpawnMagicActor(Location, Rotator, Range);
+	MagicRange = Range;
 }
 
 void AMagicCircle::Deactivate_Implementation(UNiagaraComponent* NiagaraComponent)
@@ -40,16 +39,28 @@ void AMagicCircle::Deactivate_Implementation(UNiagaraComponent* NiagaraComponent
 	Destroy();
 }
 
-void AMagicCircle::SpawnMagicActor(UPARAM(ref)FVector& Location, UPARAM(ref)FRotator& Rotator, float Range)
+void AMagicCircle::SpawnMagicActor()
 {
 	UWorld* World = GetWorld();
 	if (World != nullptr && MagicClass != nullptr)
 	{
-		ABaseMagic* Magic = World->SpawnActor<ABaseMagic>(MagicClass, Location, Rotator);
+		ABaseMagic* Magic = World->SpawnActor<ABaseMagic>(MagicClass, GetActorLocation(), GetActorRotation());
 		if (Magic != nullptr && GetOwner() != nullptr)
 		{
 			Magic->SetOwner(GetOwner());
-			Magic->Activate(Location, Rotator, Range);
+			Magic->Activate(GetActorLocation(), GetActorRotation(), MagicRange);
 		}
+	}
+}
+
+void AMagicCircle::DelaySpawnMagicActor()
+{
+	if (Delay > 0)
+	{
+		GetWorldTimerManager().SetTimer(SpawnDelayTimer, this, &AMagicCircle::SpawnMagicActor, Delay);
+	}
+	else
+	{
+		SpawnMagicActor();
 	}
 }

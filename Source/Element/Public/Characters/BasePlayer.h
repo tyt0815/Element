@@ -34,6 +34,7 @@ private:
 	void AttackOngoing(const FInputActionInstance& Instance);
 	void AttackTriggered(const FInputActionInstance& Instance);
 	void CastOngoing(const FInputActionInstance& Instance);
+	void CastTriggered(const FInputActionInstance& Instance);
 
 	UPROPERTY(EditAnywhere, Category = "Input | InputMappingContext");
 	UInputMappingContext* KBMMappingContext = nullptr;
@@ -96,16 +97,21 @@ private:
 	* 전투 시스템
 	*/
 public:
-	FVector GetFlyMagicCircleLocation(FVector& Offset);
-	FRotator GetFlyMagicCircleRotator();
 	FVector GetMagicCircleMiddlePointLocation();
+	FVector GetMagicCircleMiddlePointLocation(FVector Offset);
+	FRotator GetMagicCircleRotator();
+	void InitCurrentElements(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth);
+	void InitElementsReadyQ(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth);
+	float GetCastableRange(float Range);
+	bool FindFloorMagicCircleLocation(FVector FlyLocation, FVector& FloorLocation);
 
 	UFUNCTION(BlueprintCallable, Category = "Magic")
 	void ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass);
 
 private:
+
 	UPROPERTY(EditAnywhere, Category = "Magic");
-	FVector MagicCircleMiddlePointOffset = FVector(70.0f, 0.0f, 50.0f);
+	float MagicCircleMiddlePointOffset = 70.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	float MagicBulletCoolTime;
@@ -119,7 +125,13 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	float MagicBulletRange = 2000.0f;
 
-	FTimerHandle MagicBulletTimer;
+	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
+	float MagicCircleRange = 1000.0f;
+
+	
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	EPlayerCastedMagic PlayerCastedMagic = EPlayerCastedMagic::EPCM_None;
+	TArray<EPlayerElement> CurrentElements;
+	TQueue<EPlayerElement> ElementsReadyQ;
+	FTimerHandle MagicBulletTimer;
 };

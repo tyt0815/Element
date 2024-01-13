@@ -33,7 +33,18 @@ public:
 	virtual void Deactivate_Implementation(UNiagaraComponent* NiagaraComponent);
 
 	UFUNCTION(BlueprintCallable, Category = "Magic Circle")
-	void SpawnMagicActor(UPARAM(ref) FVector& Location, UPARAM(ref) FRotator& Rotator, float Range);
+	void SpawnMagicActor();
+
+	UFUNCTION(BlueprintCallable, Category = "Magic Circle")
+	void DelaySpawnMagicActor();
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Magic Bullet Circle");
+	float Delay = 0;
+
+	FTimerHandle SpawnDelayTimer;
+
+	float MagicRange;
 
 private:
 	UPROPERTY(EditAnywhere, Category = MagicCircle);
