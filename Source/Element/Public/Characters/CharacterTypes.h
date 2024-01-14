@@ -18,9 +18,9 @@ UENUM(BlueprintType)
 enum class EPlayerElement : uint8
 
 {
-	EPET_None = 0 UMETA(DisplayName = "None"),
-	EPET_Ignis = 0x1 UMETA(DisplayName = "Ignis"),
-	EPET_Aqua = 0x2 UMETA(DisplayName = "Aqua"),
-	EPET_Ventus = 0x4 UMETA(DisplayName = "Ventus"),
-	EPET_Terra = 0x8 UMETA(DisplayName = "Terra")
+	EPE_None = 0 UMETA(DisplayName = "None"),
+	EPE_Ignis = 0x1 UMETA(DisplayName = "Ignis"),
+	EPE_Aqua = 0x2 UMETA(DisplayName = "Aqua"),
+	EPE_Ventus = 0x4 UMETA(DisplayName = "Ventus"),
+	EPE_Terra = 0x8 UMETA(DisplayName = "Terra")
 };

@@ -12,6 +12,8 @@
 #include "Element/DebugMacro.h"
 #include "Magic/MagicCircle.h"
 #include "Magic/BaseMagic.h"
+#include "HUDs/PlayerHUD.h"
+#include "HUDs/PlayerOverlay.h"
 
 ABasePlayer::ABasePlayer() : ABaseCharacter()
 {
@@ -27,8 +29,9 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 	ViewCamera->SetupAttachment(SpringArm);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
-	InitCurrentElements(EPlayerElement::EPET_Ignis, EPlayerElement::EPET_Aqua, EPlayerElement::EPET_Ventus, EPlayerElement::EPET_Terra);
-	InitElementsReadyQ(EPlayerElement::EPET_Ignis, EPlayerElement::EPET_Aqua, EPlayerElement::EPET_Ventus, EPlayerElement::EPET_Terra);
+	InitElementsArray(EPlayerElement::EPE_Ignis, EPlayerElement::EPE_Aqua, EPlayerElement::EPE_Ventus, EPlayerElement::EPE_Terra);
+	InitElementsReadyArray(EPlayerElement::EPE_Ignis, EPlayerElement::EPE_Aqua, EPlayerElement::EPE_Ventus, EPlayerElement::EPE_Terra);
+	InitElementsSeletedArray();
 }
 
 void ABasePlayer::Tick(float DeltaTime)
@@ -36,6 +39,8 @@ void ABasePlayer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	ZoomOutCamera();
+
+	PlayerOverlay->SetElementSlots(ElementsArray, ElementsReadyArray, ElementsSelectedArray);
 }
 
 void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -75,6 +80,8 @@ void ABasePlayer::BeginPlay()
 
 	OriginSpringArmLength = SpringArm->TargetArmLength;
 	OriginCameraLocation = ViewCamera->GetRelativeLocation();
+
+	InitPlayerOverlay();
 }
 
 void ABasePlayer::Move(const FInputActionInstance& Instance)
@@ -247,22 +254,6 @@ float ABasePlayer::GetCastableRange(float Range)
 	return Range;
 }
 
-void ABasePlayer::InitCurrentElements(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth)
-{
-	CurrentElements.Add(First);
-	CurrentElements.Add(Second);
-	CurrentElements.Add(Third);
-	CurrentElements.Add(Forth);
-}
-
-void ABasePlayer::InitElementsReadyQ(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth)
-{
-	ElementsReadyQ.Enqueue(First);
-	ElementsReadyQ.Enqueue(Second);
-	ElementsReadyQ.Enqueue(Third);
-	ElementsReadyQ.Enqueue(Forth);
-}
-
 bool ABasePlayer::FindFloorMagicCircleLocation(FVector FlyLocation, FVector& FloorLocation)
 {
 	FVector Offset(0, 0, 0);
@@ -293,6 +284,31 @@ bool ABasePlayer::FindFloorMagicCircleLocation(FVector FlyLocation, FVector& Flo
 	return false;
 }
 
+void ABasePlayer::InitElementsArray(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth)
+{
+	ElementsArray.SetNum(4);
+	ElementsArray[0] = First;
+	ElementsArray[1] = Second;
+	ElementsArray[2] = Third;
+	ElementsArray[3] = Forth;
+}
+
+void ABasePlayer::InitElementsReadyArray(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth)
+{
+	ElementsReadyArray.SetNum(4);
+	ElementsReadyArray[0] = First;
+	ElementsReadyArray[1] = Second;
+	ElementsReadyArray[2] = Third;
+	ElementsReadyArray[3] = Forth;
+}
+
+void ABasePlayer::InitElementsSeletedArray()
+{
+	ElementsSelectedArray.SetNum(2);
+	ElementsSelectedArray[0] = EPlayerElement::EPE_None;
+	ElementsSelectedArray[1] = EPlayerElement::EPE_None;
+}
+
 void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass)
 {
 	AMagicCircle* MagicCircle = nullptr;
@@ -304,6 +320,19 @@ void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, float 
 		{
 			MagicCircle->SetOwner(this);
 			MagicCircle->Activate(Location, Rotator, Range);
+		}
+	}
+}
+
+void ABasePlayer::InitPlayerOverlay()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		APlayerHUD* PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
+		if (PlayerHUD)
+		{
+			PlayerOverlay = Cast<UPlayerOverlay>(PlayerHUD->GetPlayerOverlay());
 		}
 	}
 }

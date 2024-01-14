@@ -8,6 +8,7 @@ class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
 class UCameraComponent;
+class UPlayerOverlay;
 class AMagicCircle;
 
 struct FInputActionInstance;
@@ -100,10 +101,11 @@ public:
 	FVector GetMagicCircleMiddlePointLocation();
 	FVector GetMagicCircleMiddlePointLocation(FVector Offset);
 	FRotator GetMagicCircleRotator();
-	void InitCurrentElements(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth);
-	void InitElementsReadyQ(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth);
 	float GetCastableRange(float Range);
 	bool FindFloorMagicCircleLocation(FVector FlyLocation, FVector& FloorLocation);
+	void InitElementsArray(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth);
+	void InitElementsReadyArray(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth);
+	void InitElementsSeletedArray();
 
 	UFUNCTION(BlueprintCallable, Category = "Magic")
 	void ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass);
@@ -131,7 +133,17 @@ private:
 	
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	EPlayerCastedMagic PlayerCastedMagic = EPlayerCastedMagic::EPCM_None;
-	TArray<EPlayerElement> CurrentElements;
-	TQueue<EPlayerElement> ElementsReadyQ;
+	TArray<EPlayerElement> ElementsArray;
+	TArray<EPlayerElement> ElementsReadyArray;
+	TArray<EPlayerElement> ElementsSelectedArray;
 	FTimerHandle MagicBulletTimer;
+
+	/*
+	* HUD
+	*/
+private:
+	void InitPlayerOverlay();
+
+	UPROPERTY()
+	UPlayerOverlay* PlayerOverlay;
 };

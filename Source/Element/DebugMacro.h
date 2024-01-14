@@ -5,10 +5,12 @@
 if(GEngine)\
 { FColor LogColor; \
 switch (Key){ case 0: LogColor = FColor::Red; break; case 1: LogColor = FColor::Green; break; case 2: LogColor = FColor::Blue; break;\
-				case 3: LogColor = FColor::Yellow; break; case 4: LogColor = FColor::Cyan; break; case 5: LogColor = FColor::Magenta; break;  }\
+				case 3: LogColor = FColor::Yellow; break; case 4: LogColor = FColor::Cyan; break; case 5: LogColor = FColor::Magenta; break;\
+				default: FColor::Purple; break;  }\
 GEngine->AddOnScreenDebugMessage(Key, 5, LogColor, DebugMessage);}
 #define SCREEN_LOG_COLOR(Key, DisplayColor, DebugMessage) if(GEngine)\
 	{ GEngine->AddOnScreenDebugMessage(Key, 5, DisplayColor, DebugMessage); }
+#define SCREEN_LOG_SINGLE_FRAME(DebugMessage)if(GEngine) {GEngine->AddOnScreenDebugMessage(INDEX_NONE, 0, FColor::Orange, DebugMessage);}
 
 #define DRAW_SPHERE(Location) if(GetWorld())DrawDebugSphere(GetWorld(), Location, 25.f, 12, FColor::Cyan, false, 5.0f);
 #define DRAW_SPHERE_COLOR(Location, Color) if(GetWorld())DrawDebugSphere(GetWorld(), Location, 8.f, 12, Color, false, 5.0f);
