@@ -31,7 +31,7 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 
 	InitElementsArray(EPlayerElement::EPE_Ignis, EPlayerElement::EPE_Aqua, EPlayerElement::EPE_Ventus, EPlayerElement::EPE_Terra);
 	InitElementsReadyArray(EPlayerElement::EPE_Ignis, EPlayerElement::EPE_Aqua, EPlayerElement::EPE_Ventus, EPlayerElement::EPE_Terra);
-	InitElementsSeletedArray();
+	EmptyElementsSeletedArray();
 }
 
 void ABasePlayer::Tick(float DeltaTime)
@@ -59,6 +59,11 @@ void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 		Input->BindAction(CastAction, ETriggerEvent::Ongoing, this, &ABasePlayer::CastOngoing);
 		Input->BindAction(CastAction, ETriggerEvent::Triggered, this, &ABasePlayer::CastTriggered);
+
+		Input->BindAction(ElementSelectAction1, ETriggerEvent::Started, this, &ABasePlayer::ElementSelectAction1Started);
+		Input->BindAction(ElementSelectAction2, ETriggerEvent::Started, this, &ABasePlayer::ElementSelectAction2Started);
+		Input->BindAction(ElementSelectAction3, ETriggerEvent::Started, this, &ABasePlayer::ElementSelectAction3Started);
+		Input->BindAction(ElementSelectAction4, ETriggerEvent::Started, this, &ABasePlayer::ElementSelectAction4Started);
 	}
 	
 }
@@ -154,6 +159,26 @@ void ABasePlayer::CastTriggered(const FInputActionInstance& Instance)
 	}
 
 	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
+}
+
+void ABasePlayer::ElementSelectAction1Started(const FInputActionInstance& Instance)
+{
+	SelectElement(1);
+}
+
+void ABasePlayer::ElementSelectAction2Started(const FInputActionInstance& Instance)
+{
+	SelectElement(2);
+}
+
+void ABasePlayer::ElementSelectAction3Started(const FInputActionInstance& Instance)
+{
+	SelectElement(3);
+}
+
+void ABasePlayer::ElementSelectAction4Started(const FInputActionInstance& Instance)
+{
+	SelectElement(4);
 }
 
 FVector ABasePlayer::GetCameraLookAtLocation()
@@ -302,11 +327,19 @@ void ABasePlayer::InitElementsReadyArray(EPlayerElement First, EPlayerElement Se
 	ElementsReadyArray[3] = Forth;
 }
 
-void ABasePlayer::InitElementsSeletedArray()
+void ABasePlayer::EmptyElementsSeletedArray()
 {
 	ElementsSelectedArray.SetNum(2);
-	ElementsSelectedArray[0] = EPlayerElement::EPE_None;
-	ElementsSelectedArray[1] = EPlayerElement::EPE_None;
+	ElementsSelectedArray[0] = -1;
+	ElementsSelectedArray[1] = -1;
+}
+
+void ABasePlayer::SelectElement(uint8 Index)
+{
+	SCREEN_LOG(1, TEXT("SelectElement"));
+	if (ElementsSelectedArray[0] == Index - 1) return;
+	ElementsSelectedArray[1] = ElementsSelectedArray[0];
+	ElementsSelectedArray[0] = Index - 1;
 }
 
 void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass)

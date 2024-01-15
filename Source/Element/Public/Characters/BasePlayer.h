@@ -36,6 +36,10 @@ private:
 	void AttackTriggered(const FInputActionInstance& Instance);
 	void CastOngoing(const FInputActionInstance& Instance);
 	void CastTriggered(const FInputActionInstance& Instance);
+	void ElementSelectAction1Started(const FInputActionInstance& Instance);
+	void ElementSelectAction2Started(const FInputActionInstance& Instance);
+	void ElementSelectAction3Started(const FInputActionInstance& Instance);
+	void ElementSelectAction4Started(const FInputActionInstance& Instance);
 
 	UPROPERTY(EditAnywhere, Category = "Input | InputMappingContext");
 	UInputMappingContext* KBMMappingContext = nullptr;
@@ -54,6 +58,18 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* CastAction = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
+	UInputAction* ElementSelectAction1 = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
+	UInputAction* ElementSelectAction2 = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
+	UInputAction* ElementSelectAction3 = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
+	UInputAction* ElementSelectAction4 = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Locomotion");
 	float WalkSpeed;
@@ -105,7 +121,8 @@ public:
 	bool FindFloorMagicCircleLocation(FVector FlyLocation, FVector& FloorLocation);
 	void InitElementsArray(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth);
 	void InitElementsReadyArray(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth);
-	void InitElementsSeletedArray();
+	void EmptyElementsSeletedArray();
+	void SelectElement(uint8 Index);
 
 	UFUNCTION(BlueprintCallable, Category = "Magic")
 	void ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass);
@@ -135,7 +152,7 @@ private:
 	EPlayerCastedMagic PlayerCastedMagic = EPlayerCastedMagic::EPCM_None;
 	TArray<EPlayerElement> ElementsArray;
 	TArray<EPlayerElement> ElementsReadyArray;
-	TArray<EPlayerElement> ElementsSelectedArray;
+	TArray<int8> ElementsSelectedArray;
 	FTimerHandle MagicBulletTimer;
 
 	/*
