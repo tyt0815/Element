@@ -1,6 +1,8 @@
 #include "Characters/BaseCharacter.h"
 #include "Kismet/KismetMathLibrary.h"
 
+#include "Element/DebugMacro.h"
+
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -23,6 +25,11 @@ void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+{
+	SCREEN_LOG_NONE_KEY(TEXT("GetHit is not implemetated"));
 }
 
 FVector ABaseCharacter::VectorClamp(const FVector& Vector, const FVector& MinVector, const FVector& MaxVector)

@@ -7,6 +7,7 @@
 class UNiagaraComponent;
 class UBaseAbilityComponent;
 class ABaseMagic;
+class UPrimitiveComponent;
 
 UCLASS()
 class ELEMENT_API AMagicCircle : public AActor
@@ -29,8 +30,8 @@ public:
 	virtual void Activate_Implementation(FVector Location, FRotator Rotator, float Range);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Magic Circle")
-	void Deactivate(UNiagaraComponent* NiagaraComponent);
-	virtual void Deactivate_Implementation(UNiagaraComponent* NiagaraComponent);
+	void Deactivate(UNiagaraComponent* PSystem);
+	virtual void Deactivate_Implementation(UNiagaraComponent* PSystem);
 
 	UFUNCTION(BlueprintCallable, Category = "Magic Circle")
 	void SpawnMagicActor();
@@ -47,6 +48,7 @@ protected:
 	float MagicRange;
 
 private:
+
 	UPROPERTY(EditAnywhere, Category = MagicCircle);
 	UNiagaraComponent* MagicCircle;
 

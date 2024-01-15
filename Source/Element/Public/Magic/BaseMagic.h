@@ -6,6 +6,9 @@
 
 class UBoxComponent;
 class UArrowComponent;
+class USceneComponent;
+class UStaticMeshComponent;
+class UNiagaraComponent;
 
 UCLASS()
 class ELEMENT_API ABaseMagic : public AActor
@@ -20,7 +23,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	/*
-	* Basic Components
+	* Components Basic
 	*/
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Magic")
@@ -33,10 +36,40 @@ public:
 
 	float MagicRange;
 
-private:
-	UPROPERTY(VisibleAnywhere, Category = Magic);
+protected:
+	void BoxTrace(TArray<FHitResult>& HitResults);
+	
+	UFUNCTION()
+	virtual void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+
+	UPROPERTY(VisibleAnywhere)
+	USceneComponent* Root;
+
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* StaticMeshComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	UNiagaraComponent* NiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere);
 	UBoxComponent* HitBoxComponent;
 
-	UPROPERTY(VisibleAnywhere, Category = Magic);
+	UPROPERTY(VisibleAnywhere);
 	UArrowComponent* ArrowComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	USceneComponent* BoxTraceStart;
+
+	UPROPERTY(VisibleAnywhere)
+	USceneComponent* BoxTraceEnd;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Trace")
+	FVector BoxTraceHalfSize;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Trace")
+	FRotator BoxTraceOrientation;
+
+	TArray<AActor*> ActorsToIgnore;
 };

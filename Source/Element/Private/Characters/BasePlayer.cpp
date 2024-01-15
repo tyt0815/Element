@@ -23,7 +23,7 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 	bUseControllerRotationRoll = false;
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(GetRootComponent());
-	SpringArm->TargetArmLength = 300.0f;
+	SpringArm->TargetArmLength = 500.0f;
 	SpringArm->bUsePawnControlRotation = true;
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(SpringArm);
@@ -273,7 +273,7 @@ float ABasePlayer::GetCastableRange(float Range)
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForOneFrame,
+		EDrawDebugTrace::None,
 		HitResult,
 		true
 	);
@@ -300,7 +300,7 @@ bool ABasePlayer::FindFloorMagicCircleLocation(FVector FlyLocation, FVector& Flo
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForOneFrame,
+		EDrawDebugTrace::None,
 		HitResult,
 		true
 	);

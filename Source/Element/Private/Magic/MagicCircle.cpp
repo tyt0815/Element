@@ -9,11 +9,14 @@ AMagicCircle::AMagicCircle()
 	PrimaryActorTick.bCanEverTick = false;
 	MagicCircle = CreateDefaultSubobject<UNiagaraComponent>(TEXT("MagicCircle"));
 	SetRootComponent(MagicCircle);
+	MagicCircle->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AMagicCircle::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	MagicCircle->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	MagicCircle->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 }
 
 void AMagicCircle::BeginPlay()
@@ -34,7 +37,7 @@ void AMagicCircle::Activate_Implementation(FVector Location, FRotator Rotator, f
 	MagicRange = Range;
 }
 
-void AMagicCircle::Deactivate_Implementation(UNiagaraComponent* NiagaraComponent)
+void AMagicCircle::Deactivate_Implementation(UNiagaraComponent* PSystem)
 {
 	Destroy();
 }

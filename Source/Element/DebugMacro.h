@@ -11,6 +11,7 @@ GEngine->AddOnScreenDebugMessage(Key, 5, LogColor, DebugMessage);}
 #define SCREEN_LOG_COLOR(Key, DisplayColor, DebugMessage) if(GEngine)\
 	{ GEngine->AddOnScreenDebugMessage(Key, 5, DisplayColor, DebugMessage); }
 #define SCREEN_LOG_SINGLE_FRAME(DebugMessage)if(GEngine) {GEngine->AddOnScreenDebugMessage(INDEX_NONE, 0, FColor::Orange, DebugMessage);}
+#define SCREEN_LOG_NONE_KEY(DebugMessage)if(GEngine) {GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Orange, DebugMessage);}
 
 #define DRAW_SPHERE(Location) if(GetWorld())DrawDebugSphere(GetWorld(), Location, 25.f, 12, FColor::Cyan, false, 5.0f);
 #define DRAW_SPHERE_COLOR(Location, Color) if(GetWorld())DrawDebugSphere(GetWorld(), Location, 8.f, 12, Color, false, 5.0f);
