@@ -19,7 +19,7 @@ class ELEMENT_API UElementSlotWidget : public UUserWidget
 	*/
 public:
 	FORCEINLINE UWidgetSwitcher* GetElementSwitcher() { return ElementSwitcher; }
-	void SetElementSlot(EPlayerElement Element);
+	void SetElementSlot(EFourElement Element);
 
 private:
 	UPROPERTY(meta = (BindWidget))

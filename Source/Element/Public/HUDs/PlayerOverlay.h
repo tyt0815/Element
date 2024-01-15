@@ -18,14 +18,14 @@ public:
 	*/
 public:
 	void InitSlotArrays();
-	void SetElementSlots(const TArray<EPlayerElement>& ElementsArray,
-		const TArray<EPlayerElement>& ElementsReadyArray,
+	void SetElementSlots(const TArray<EFourElement>& ElementsArray,
+		const TArray<EFourElement>& ElementsReadyArray,
 		const TArray<int8>& ElementsSelectedArray
 	);
 
 private:
-	void SetElementSlots(const TArray<EPlayerElement>& ElementsArray, UHorizontalBox* Slots);
-	void SetSelectedSlot(const TArray<EPlayerElement>& ElementsArray, const TArray<int8>& ElementsSelectedArray);
+	void SetElementSlots(const TArray<EFourElement>& ElementsArray, UHorizontalBox* Slots);
+	void SetSelectedSlot(const TArray<EFourElement>& ElementsArray, const TArray<int8>& ElementsSelectedArray);
 
 	UPROPERTY(meta = (BindWidget))
 	UHorizontalBox* ElementSlots;

@@ -119,10 +119,11 @@ public:
 	FRotator GetMagicCircleRotator();
 	float GetCastableRange(float Range);
 	bool FindFloorMagicCircleLocation(FVector FlyLocation, FVector& FloorLocation);
-	void InitElementsArray(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth);
-	void InitElementsReadyArray(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth);
+	void InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
+	void InitElementsReadyArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
 	void EmptyElementsSeletedArray();
 	void SelectElement(uint8 Index);
+	void UseSelectedElements();
 
 	UFUNCTION(BlueprintCallable, Category = "Magic")
 	void ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass);
@@ -150,8 +151,8 @@ private:
 	
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	EPlayerCastedMagic PlayerCastedMagic = EPlayerCastedMagic::EPCM_None;
-	TArray<EPlayerElement> ElementsArray;
-	TArray<EPlayerElement> ElementsReadyArray;
+	TArray<EFourElement> ElementsArray;
+	TArray<EFourElement> ElementsReadyArray;
 	TArray<int8> ElementsSelectedArray;
 	FTimerHandle MagicBulletTimer;
 

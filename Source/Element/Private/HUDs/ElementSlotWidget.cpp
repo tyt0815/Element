@@ -1,21 +1,21 @@
 #include "HUDs/ElementSlotWidget.h"
 #include "Components/WidgetSwitcher.h"
 
-void UElementSlotWidget::SetElementSlot(EPlayerElement Element)
+void UElementSlotWidget::SetElementSlot(EFourElement Element)
 {
 	int ElementIndex;
 	switch (Element)
 	{
-	case EPlayerElement::EPE_Ignis:
+	case EFourElement::EPE_Ignis:
 		ElementIndex = 1;
 		break;
-	case EPlayerElement::EPE_Aqua:
+	case EFourElement::EPE_Aqua:
 		ElementIndex = 2;
 		break;
-	case EPlayerElement::EPE_Ventus:
+	case EFourElement::EPE_Ventus:
 		ElementIndex = 3;
 		break;
-	case EPlayerElement::EPE_Terra:
+	case EFourElement::EPE_Terra:
 		ElementIndex = 4;
 		break;
 	default:

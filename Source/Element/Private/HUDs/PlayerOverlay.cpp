@@ -17,8 +17,8 @@ void UPlayerOverlay::InitSlotArrays()
 {
 }
 
-void UPlayerOverlay::SetElementSlots(const TArray<EPlayerElement>& ElementsArray,
-	const TArray<EPlayerElement>& ElementsReadyArray,
+void UPlayerOverlay::SetElementSlots(const TArray<EFourElement>& ElementsArray,
+	const TArray<EFourElement>& ElementsReadyArray,
 	const TArray<int8>& ElementsSelectedArray)
 {
 	SetElementSlots(ElementsArray, ElementSlots);
@@ -26,7 +26,7 @@ void UPlayerOverlay::SetElementSlots(const TArray<EPlayerElement>& ElementsArray
 	SetSelectedSlot(ElementsArray, ElementsSelectedArray);
 }
 
-void UPlayerOverlay::SetElementSlots(const TArray<EPlayerElement>& ElementsArray, UHorizontalBox* Slots)
+void UPlayerOverlay::SetElementSlots(const TArray<EFourElement>& ElementsArray, UHorizontalBox* Slots)
 {
 	const int n = ElementsArray.Num(), m = Slots->GetChildrenCount();
 	if (n != m)
@@ -44,7 +44,7 @@ void UPlayerOverlay::SetElementSlots(const TArray<EPlayerElement>& ElementsArray
 	}
 }
 
-void UPlayerOverlay::SetSelectedSlot(const TArray<EPlayerElement>& ElementsArray, const TArray<int8>& ElementsSelectedArray)
+void UPlayerOverlay::SetSelectedSlot(const TArray<EFourElement>& ElementsArray, const TArray<int8>& ElementsSelectedArray)
 {
 	const int n = ElementsSelectedArray.Num(), m = SelectedSlots->GetChildrenCount();
 	if (n != m)
@@ -68,7 +68,7 @@ void UPlayerOverlay::SetSelectedSlot(const TArray<EPlayerElement>& ElementsArray
 		UElementSlotWidget* ElementSlotWidget = Cast<UElementSlotWidget>(SelectedSlots->GetChildAt(i));
 		if (ElementSlotWidget)
 		{
-			ElementSlotWidget->SetElementSlot(EPlayerElement::EPE_None);
+			ElementSlotWidget->SetElementSlot(EFourElement::EPE_None);
 		}
 	}
 }

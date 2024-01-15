@@ -29,8 +29,8 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 	ViewCamera->SetupAttachment(SpringArm);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
-	InitElementsArray(EPlayerElement::EPE_Ignis, EPlayerElement::EPE_Aqua, EPlayerElement::EPE_Ventus, EPlayerElement::EPE_Terra);
-	InitElementsReadyArray(EPlayerElement::EPE_Ignis, EPlayerElement::EPE_Aqua, EPlayerElement::EPE_Ventus, EPlayerElement::EPE_Terra);
+	InitElementsArray(EFourElement::EPE_Ignis, EFourElement::EPE_Aqua, EFourElement::EPE_Ventus, EFourElement::EPE_Terra);
+	InitElementsReadyArray(EFourElement::EPE_Ignis, EFourElement::EPE_Aqua, EFourElement::EPE_Ventus, EFourElement::EPE_Terra);
 	EmptyElementsSeletedArray();
 }
 
@@ -159,6 +159,11 @@ void ABasePlayer::CastTriggered(const FInputActionInstance& Instance)
 	}
 
 	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
+
+	if (ElementsSelectedArray[ElementsSelectedArray.Num() - 1] != -1)
+	{
+		UseSelectedElements();
+	}
 }
 
 void ABasePlayer::ElementSelectAction1Started(const FInputActionInstance& Instance)
@@ -309,7 +314,7 @@ bool ABasePlayer::FindFloorMagicCircleLocation(FVector FlyLocation, FVector& Flo
 	return false;
 }
 
-void ABasePlayer::InitElementsArray(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth)
+void ABasePlayer::InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth)
 {
 	ElementsArray.SetNum(4);
 	ElementsArray[0] = First;
@@ -318,7 +323,7 @@ void ABasePlayer::InitElementsArray(EPlayerElement First, EPlayerElement Second,
 	ElementsArray[3] = Forth;
 }
 
-void ABasePlayer::InitElementsReadyArray(EPlayerElement First, EPlayerElement Second, EPlayerElement Third, EPlayerElement Forth)
+void ABasePlayer::InitElementsReadyArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth)
 {
 	ElementsReadyArray.SetNum(4);
 	ElementsReadyArray[0] = First;
@@ -336,10 +341,35 @@ void ABasePlayer::EmptyElementsSeletedArray()
 
 void ABasePlayer::SelectElement(uint8 Index)
 {
-	SCREEN_LOG(1, TEXT("SelectElement"));
 	if (ElementsSelectedArray[0] == Index - 1) return;
-	ElementsSelectedArray[1] = ElementsSelectedArray[0];
+	int n = ElementsSelectedArray.Num();
+	for (int i = 1; i < n; ++i)
+	{
+		ElementsSelectedArray[n - i] = ElementsSelectedArray[n - i - 1];
+	}
 	ElementsSelectedArray[0] = Index - 1;
+}
+
+void ABasePlayer::UseSelectedElements()
+{
+
+	TArray<EFourElement> Selected;
+	int n = ElementsSelectedArray.Num();
+	int m = ElementsReadyArray.Num();
+	for (int i = 0; i < n; ++i)
+	{
+		Selected.Add(ElementsArray[ElementsSelectedArray[n - i - 1]]);
+		ElementsArray[ElementsSelectedArray[n - i - 1]] = ElementsReadyArray[i];
+	}
+	for (int i = n; i < m; ++i)
+	{
+		ElementsReadyArray[i - n] = ElementsReadyArray[i];
+	}
+	for (int i = 0; i < n; ++i)
+	{
+		ElementsReadyArray[m - n + i] = Selected[i];
+	}
+	EmptyElementsSeletedArray();
 }
 
 void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass)
