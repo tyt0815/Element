@@ -4,6 +4,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "NiagaraComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Element/DebugMacro.h"
 #include "Interfaces/HitInterface.h"
@@ -50,7 +51,7 @@ void ABaseMagic::BeginPlay()
 void ABaseMagic::Activate_Implementation(FVector Location, FRotator Rotator, float Range)
 {
 	ActorsToIgnore.Empty();
-	ActorsToIgnore.Add(GetOwner());
+	ActorsToIgnore.Add(GetOwner()); 
 }
 
 void ABaseMagic::Deactivate_Implementation()
@@ -92,18 +93,19 @@ void ABaseMagic::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 	BoxTrace(HitResults);
 
 	int n = HitResults.Num();
-	SCREEN_LOG(2, FString::FromInt(n));
 	for (int i = 0; i < n; ++i)
 	{
 		IHitInterface* HitInterface = Cast<IHitInterface>(HitResults[i].GetActor());
 		if (HitInterface)
 		{
-			SCREEN_LOG(1, TEXT("Sibal"));
 			HitInterface->Execute_GetHit(HitResults[i].GetActor(), HitResults[i].ImpactPoint, GetOwner());
 		}
-		else
-		{
-			SCREEN_LOG(1, HitResults[i].GetActor()->GetName());
-		}
+		UGameplayStatics::ApplyDamage(
+			HitResults[i].GetActor(),
+			1,
+			GetInstigatorController(),
+			this,
+			UDamageType::StaticClass()
+		);
 	}
 }

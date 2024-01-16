@@ -382,6 +382,7 @@ void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, float 
 		if (MagicCircle != nullptr)
 		{
 			MagicCircle->SetOwner(this);
+			MagicCircle->SetInstigator(this);
 			MagicCircle->Activate(Location, Rotator, Range);
 		}
 	}

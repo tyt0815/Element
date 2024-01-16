@@ -51,6 +51,7 @@ void AMagicCircle::SpawnMagicActor()
 		if (Magic != nullptr && GetOwner() != nullptr)
 		{
 			Magic->SetOwner(GetOwner());
+			Magic->SetInstigator(GetInstigator());
 			Magic->Activate(GetActorLocation(), GetActorRotation(), MagicRange);
 		}
 	}
