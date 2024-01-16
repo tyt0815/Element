@@ -39,8 +39,6 @@ void ABasePlayer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	ZoomOutCamera();
-
-	PlayerOverlay->SetElementSlots(ElementsArray, ElementsReadyArray, ElementsSelectedArray);
 }
 
 void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -87,6 +85,7 @@ void ABasePlayer::BeginPlay()
 	OriginCameraLocation = ViewCamera->GetRelativeLocation();
 
 	InitPlayerOverlay();
+	UpdateElementSlotUI();
 }
 
 void ABasePlayer::Move(const FInputActionInstance& Instance)
@@ -118,16 +117,15 @@ void ABasePlayer::Look(const FInputActionInstance& Instance)
 void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 {
 	ZoomInCamera();
-	// MagicBullet
-	if (GetWorldTimerManager().GetTimerRemaining(MagicBulletTimer) < 0)
+	FVector MagicCircleLocation;
+	FVector OffsetVector;
+	OffsetVector.X = MagicBulletLocationOffset.X;
+	OffsetVector.Y = FMath::RandRange(-MagicBulletLocationOffset.Y, MagicBulletLocationOffset.Y);
+	OffsetVector.Z = FMath::RandRange(-MagicBulletLocationOffset.Z, MagicBulletLocationOffset.Z);
+	if (IsCoolDown(MagicBulletTimer) && CalcCharacterFrontMagicCircleLocation(OffsetVector, MagicCircleLocation))
 	{
-		FVector OffsetVector;
-		OffsetVector.X = MagicBulletLocationOffset.X;
-		OffsetVector.Y = FMath::RandRange(-MagicBulletLocationOffset.Y, MagicBulletLocationOffset.Y);
-		OffsetVector.Z = FMath::RandRange(-MagicBulletLocationOffset.Z, MagicBulletLocationOffset.Z);
-		FVector SpawnLocation = GetMagicCircleMiddlePointLocation(OffsetVector);
-		FRotator SpawnRotator = GetMagicCircleRotator();
-		ActivateMagicCircle(SpawnLocation, SpawnRotator, MagicBulletRange, MagicBulletCircleClass);
+		FRotator SpawnRotator = GetCharacterFrontMagicCircleRotator();
+		ActivateMagicCircle(MagicCircleLocation, SpawnRotator, MagicBulletRange, MagicBulletCircleClass);
 		GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
 	}
 }
@@ -188,7 +186,7 @@ void ABasePlayer::ElementSelectAction4Started(const FInputActionInstance& Instan
 
 FVector ABasePlayer::GetCameraLookAtLocation()
 {
-	return ViewCamera->GetComponentLocation() + (ViewCamera->GetForwardVector() * LookAtOffset); 
+	return ViewCamera->GetComponentLocation() + (ViewCamera->GetForwardVector() * LookAtOffset);
 }
 
 float ABasePlayer::GetSpringArmVelocity()
@@ -314,6 +312,105 @@ bool ABasePlayer::FindFloorMagicCircleLocation(FVector FlyLocation, FVector& Flo
 	return false;
 }
 
+FVector ABasePlayer::GetChestLocation()
+{
+	return GetActorLocation() + FVector(0, 0, ChestLocationZOffset);
+}
+
+bool ABasePlayer::CalcCharacterFrontMagicCircleLocation(FVector Offset, FVector& Location)
+{
+	FVector Chest = GetChestLocation();
+	FRotator Rotator = GetCharacterFrontMagicCircleRotator();
+	FVector x = UKismetMathLibrary::GetForwardVector(Rotator);
+	FVector y = UKismetMathLibrary::GetRightVector(Rotator);
+	FVector z = UKismetMathLibrary::GetUpVector(Rotator);
+	FVector CastableStart = Chest + x * CharacterFrontCastableRange;
+	FVector Dummy;
+	if (IsBlocked(Chest, CastableStart, Dummy))
+	{
+		return false;
+	}
+	Location = CastableStart + x * Offset.X + y * Offset.Y + z * Offset.Z;
+	return true;
+}
+
+bool ABasePlayer::CalcFloorMagicCircleLocation(FVector Offset, FVector& Location)
+{
+	return false;
+}
+
+bool ABasePlayer::CalcTopDownMagicCircleLocation(FVector Offset, FVector& Location)
+{
+	return false;
+}
+
+bool ABasePlayer::CalcFlyMagicCircleLocation(FVector Offset, FVector& Location)
+{
+	return false;
+}
+/// <summary>
+/// LineTrace로 두 위치 사이에 Actor가 있는지 확인한다.
+/// </summary>
+/// <param name="Start">첫번째 위치</param>
+/// <param name="End">두번째 위치</param>
+/// <param name="BlockedLocation">막힌 위치를 반환한다. 막히지 않았을 경우 End위치를 반환한다.</param>
+/// <returns></returns>
+bool ABasePlayer::IsBlocked(FVector Start, FVector End, FVector& BlockedLocation)
+{
+	
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(this);
+	FHitResult HitResult;
+	UKismetSystemLibrary::LineTraceSingle(
+		this,
+		Start,
+		End,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::None,
+		HitResult,
+		true
+	);
+	if (HitResult.GetActor())
+	{
+		BlockedLocation = HitResult.ImpactPoint;
+		return true;
+	}
+	BlockedLocation = End;
+	return false;
+}
+
+bool ABasePlayer::IsCoolDown(FTimerHandle& CoolTimer)
+{
+	return GetWorldTimerManager().GetTimerRemaining(CoolTimer) < 0;
+}
+
+FRotator ABasePlayer::GetCharacterFrontMagicCircleRotator()
+{
+	FVector x = GetCameraLookAtLocation() - GetChestLocation();
+	FVector y = ViewCamera->GetRightVector();
+	FVector z = x.Cross(y);
+	y = z.Cross(x);
+	FRotator Rotator = FMatrix(x, y, z, FVector::ZeroVector).Rotator();
+	return Rotator;
+}
+
+FRotator ABasePlayer::GetFloorMagicCircleRotator()
+{
+	return FRotator();
+}
+
+FRotator ABasePlayer::GetTopDownMagicCircleLocation()
+{
+	return FRotator();
+}
+
+FRotator ABasePlayer::GetFlyMagicCircleRotator()
+{
+	return FRotator();
+}
+
 void ABasePlayer::InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth)
 {
 	ElementsArray.SetNum(4);
@@ -348,6 +445,7 @@ void ABasePlayer::SelectElement(uint8 Index)
 		ElementsSelectedArray[n - i] = ElementsSelectedArray[n - i - 1];
 	}
 	ElementsSelectedArray[0] = Index - 1;
+	UpdateElementSlotUI();
 }
 
 void ABasePlayer::UseSelectedElements()
@@ -370,6 +468,12 @@ void ABasePlayer::UseSelectedElements()
 		ElementsReadyArray[m - n + i] = Selected[i];
 	}
 	EmptyElementsSeletedArray();
+	UpdateElementSlotUI();
+}
+
+void ABasePlayer::UpdateElementSlotUI()
+{
+	PlayerOverlay->SetElementSlots(ElementsArray, ElementsReadyArray, ElementsSelectedArray);
 }
 
 void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass)

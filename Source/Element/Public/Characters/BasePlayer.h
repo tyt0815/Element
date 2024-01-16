@@ -95,7 +95,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "View");
 	UCameraComponent* ViewCamera;
 
-	UPROPERTY(VisibleAnywhere, Category = "View");
+	UPROPERTY(EditAnywhere, Category = "View");
 	float LookAtOffset = 5000.0f;
 
 	UPROPERTY(EditAnywhere, Category = "View");
@@ -119,11 +119,25 @@ public:
 	FRotator GetMagicCircleRotator();
 	float GetCastableRange(float Range);
 	bool FindFloorMagicCircleLocation(FVector FlyLocation, FVector& FloorLocation);
+
+	FVector GetChestLocation();
+	bool CalcCharacterFrontMagicCircleLocation(FVector Offset, FVector& Location);
+	bool CalcFloorMagicCircleLocation(FVector Offset, FVector& Location);
+	bool CalcTopDownMagicCircleLocation(FVector Offset, FVector& Location);
+	bool CalcFlyMagicCircleLocation(FVector Offset, FVector& Location);
+	bool IsBlocked(FVector Start, FVector End, FVector& BlockedLocation);
+	bool IsCoolDown(FTimerHandle& CoolTimer);
+	FRotator GetCharacterFrontMagicCircleRotator();
+	FRotator GetFloorMagicCircleRotator();
+	FRotator GetTopDownMagicCircleLocation();
+	FRotator GetFlyMagicCircleRotator();
 	void InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
 	void InitElementsReadyArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
 	void EmptyElementsSeletedArray();
 	void SelectElement(uint8 Index);
 	void UseSelectedElements();
+
+	void UpdateElementSlotUI();
 
 	UFUNCTION(BlueprintCallable, Category = "Magic")
 	void ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass);
@@ -147,6 +161,13 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
 	float MagicCircleRange = 1000.0f;
+
+	///////////////////////////////////////////////
+	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
+	float ChestLocationZOffset = 70.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
+	float CharacterFrontCastableRange;
 
 	
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
