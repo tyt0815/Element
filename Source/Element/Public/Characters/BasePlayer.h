@@ -83,15 +83,16 @@ private:
 public:
 	FVector GetCameraLookAtLocation();
 
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "View");
+	UCameraComponent* ViewCamera;
+
 private:
 	void ZoomOutCamera();
 	void ZoomInCamera();
 
 	UPROPERTY(VisibleAnywhere, Category = "View");
 	USpringArmComponent* SpringArm;
-
-	UPROPERTY(VisibleAnywhere, Category = "View");
-	UCameraComponent* ViewCamera;
 
 	UPROPERTY(EditAnywhere, Category = "View");
 	float LookAtOffset = 5000.0f;
@@ -120,9 +121,9 @@ public:
 
 	FVector GetChestLocation();
 	bool LocateCharacterFrontMagicCircle(FVector Offset, FVector& Location);
-	bool LocateCalcFloorMagicCircle(FVector Offset, FVector& Location);
+	bool LocateFloorMagicCircle(FVector Offset, FVector& Location);
 	bool LocateTopDownMagicCircle(FVector Offset, FVector& Location);
-	bool LocateCalcFlyMagicCircle(FVector Offset, FVector& Location);
+	bool LocateFlyMagicCircle(FVector Offset, FVector& Location);
 	bool IsBlocked(FVector Start, FVector End, FVector& BlockedLocation);
 	bool IsCoolDown(FTimerHandle& CoolTimer);
 	FRotator GetCharacterFrontMagicCircleRotator();
@@ -145,6 +146,24 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Magic");
 	float MagicCircleMiddlePointOffset = 70.0f;
 
+	
+
+	///////////////////////////////////////////////
+	UPROPERTY(EditAnywhere, Category = "MagicCircle");
+	float MagicCircleRange = 1000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "MagicCircle | CharacterFrontMagicCircle");
+	float ChestLocationZOffset = 70.0f;
+
+	UPROPERTY(EditAnywhere, Category = "MagicCircle | CharacterFrontMagicCircle");
+	float CharacterFrontCastableRange;
+
+	UPROPERTY(EditAnywhere, Category = "MagicCircle | FlyMagicCircle");
+	float FlyCastableRange;
+
+	UPROPERTY(EditAnywhere, Category = "MagicCircle | FlyMagicCircle");
+	FVector FlyMagicCircleBoxTraceHalf;
+
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	float MagicBulletCoolTime;
 
@@ -157,15 +176,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	float MagicBulletRange = 2000.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
-	float MagicCircleRange = 1000.0f;
-
-	///////////////////////////////////////////////
-	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
-	float ChestLocationZOffset = 70.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
-	float CharacterFrontCastableRange;
+	
 
 	
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;

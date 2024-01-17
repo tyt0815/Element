@@ -142,7 +142,11 @@ void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
 	
 	PlayerActionState = EPlayerActionState::EPAS_Casting;
 	FVector FloorLocation;
-	if (FindFloorMagicCircleLocation(GetMagicCircleMiddlePointLocation(FVector(GetCastableRange(MagicCircleRange), 0, 0)), FloorLocation))
+	/*if (FindFloorMagicCircleLocation(GetMagicCircleMiddlePointLocation(FVector(GetCastableRange(MagicCircleRange), 0, 0)), FloorLocation))
+	{
+		DRAW_SPHERE_SINGLE_FRAME(FloorLocation);
+	}*/
+	if (LocateFloorMagicCircle(FVector(MagicCircleRange, 0.0f, 0.0f), FloorLocation))
 	{
 		DRAW_SPHERE_SINGLE_FRAME(FloorLocation);
 	}
@@ -322,8 +326,45 @@ bool ABasePlayer::LocateCharacterFrontMagicCircle(FVector Offset, FVector& Locat
 	return true;
 }
 
-bool ABasePlayer::LocateCalcFloorMagicCircle(FVector Offset, FVector& Location)
+bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 {
+	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * FlyCastableRange;
+	FVector Block;
+	if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
+	{
+		Location = Block;
+		return false;
+	}
+	FVector End = Start + ViewCamera->GetForwardVector() * Offset.X + ViewCamera->GetRightVector() * Offset.Y + ViewCamera->GetUpVector() * Offset.Z;
+	
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(this);
+	FHitResult HitResult;
+	UKismetSystemLibrary::BoxTraceSingle(
+		this,
+		Start - ViewCamera->GetUpVector() * FlyMagicCircleBoxTraceHalf.Z,
+		End - ViewCamera->GetUpVector() * FlyMagicCircleBoxTraceHalf.Z,
+		FlyMagicCircleBoxTraceHalf,
+		FRotator::ZeroRotator,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::ForOneFrame,
+		HitResult,
+		true
+	);
+
+	if (HitResult.GetActor())
+	{
+		Location = HitResult.ImpactPoint;
+		if (HitResult.ImpactNormal.Dot(FVector::ZAxisVector) < FMath::Cos(FMath::DegreesToRadians(45)))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	Location = End;
 	return false;
 }
 
@@ -332,7 +373,7 @@ bool ABasePlayer::LocateTopDownMagicCircle(FVector Offset, FVector& Location)
 	return false;
 }
 
-bool ABasePlayer::LocateCalcFlyMagicCircle(FVector Offset, FVector& Location)
+bool ABasePlayer::LocateFlyMagicCircle(FVector Offset, FVector& Location)
 {
 	return false;
 }
