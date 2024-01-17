@@ -39,6 +39,8 @@ void ABasePlayer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	ZoomOutCamera();
+	SCREEN_LOG(0, FString::SanitizeFloat(SpringArm->TargetArmLength));
+	SCREEN_LOG(1, ViewCamera->GetRelativeLocation().ToString());
 }
 
 void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -63,7 +65,6 @@ void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		Input->BindAction(ElementSelectAction3, ETriggerEvent::Started, this, &ABasePlayer::ElementSelectAction3Started);
 		Input->BindAction(ElementSelectAction4, ETriggerEvent::Started, this, &ABasePlayer::ElementSelectAction4Started);
 	}
-	
 }
 
 void ABasePlayer::BeginPlay()
@@ -122,7 +123,7 @@ void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 	OffsetVector.X = MagicBulletLocationOffset.X;
 	OffsetVector.Y = FMath::RandRange(-MagicBulletLocationOffset.Y, MagicBulletLocationOffset.Y);
 	OffsetVector.Z = FMath::RandRange(-MagicBulletLocationOffset.Z, MagicBulletLocationOffset.Z);
-	if (IsCoolDown(MagicBulletTimer) && CalcCharacterFrontMagicCircleLocation(OffsetVector, MagicCircleLocation))
+	if (IsCoolDown(MagicBulletTimer) && LocateCharacterFrontMagicCircle(OffsetVector, MagicCircleLocation))
 	{
 		FRotator SpawnRotator = GetCharacterFrontMagicCircleRotator();
 		ActivateMagicCircle(MagicCircleLocation, SpawnRotator, MagicBulletRange, MagicBulletCircleClass);
@@ -138,6 +139,8 @@ void ABasePlayer::AttackTriggered(const FInputActionInstance& Instance)
 void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
 {
 	ZoomInCamera();
+	
+	PlayerActionState = EPlayerActionState::EPAS_Casting;
 	FVector FloorLocation;
 	if (FindFloorMagicCircleLocation(GetMagicCircleMiddlePointLocation(FVector(GetCastableRange(MagicCircleRange), 0, 0)), FloorLocation))
 	{
@@ -189,24 +192,12 @@ FVector ABasePlayer::GetCameraLookAtLocation()
 	return ViewCamera->GetComponentLocation() + (ViewCamera->GetForwardVector() * LookAtOffset);
 }
 
-float ABasePlayer::GetSpringArmVelocity()
-{
-	return (OriginSpringArmLength - ZoomSpringArmLength) * CameraMoveRate;
-}
-
-FVector ABasePlayer::GetCameraVelocity()
-{
-	return (OriginCameraLocation - ZoomCameraLocation) * CameraMoveRate;
-}
-
 void ABasePlayer::ZoomOutCamera()
 {
 	if (PlayerActionState != EPlayerActionState::EPAS_Casting)
 	{
-		float SpringArmSpeed = GetSpringArmVelocity();
-		FVector CameraSpeed = GetCameraVelocity();
-		SpringArm->TargetArmLength = FMath::Clamp(SpringArm->TargetArmLength + SpringArmSpeed, ZoomSpringArmLength, OriginSpringArmLength);
-		ViewCamera->SetRelativeLocation(VectorClamp(ViewCamera->GetRelativeLocation() + CameraSpeed, OriginCameraLocation, ZoomCameraLocation));
+		SpringArm->TargetArmLength = FMath::Lerp<float, float>(SpringArm->TargetArmLength, OriginSpringArmLength, CameraMoveRate);
+		ViewCamera->SetRelativeLocation(FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), OriginCameraLocation, CameraMoveRate));
 		GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		bUseControllerRotationYaw = false;
@@ -215,11 +206,8 @@ void ABasePlayer::ZoomOutCamera()
 
 void ABasePlayer::ZoomInCamera()
 {
-	PlayerActionState = EPlayerActionState::EPAS_Casting;
-	float SpringArmSpeed = GetSpringArmVelocity();
-	FVector CameraSpeed = GetCameraVelocity();
-	SpringArm->TargetArmLength = FMath::Clamp(SpringArm->TargetArmLength - SpringArmSpeed, ZoomSpringArmLength, OriginSpringArmLength);
-	ViewCamera->SetRelativeLocation(VectorClamp(ViewCamera->GetRelativeLocation() - CameraSpeed, OriginCameraLocation, ZoomCameraLocation));
+	SpringArm->TargetArmLength = FMath::Lerp<float, float>(SpringArm->TargetArmLength, ZoomSpringArmLength, CameraMoveRate);
+	ViewCamera->SetRelativeLocation(FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), ZoomCameraLocation, CameraMoveRate));
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	bUseControllerRotationYaw = true;
@@ -317,7 +305,7 @@ FVector ABasePlayer::GetChestLocation()
 	return GetActorLocation() + FVector(0, 0, ChestLocationZOffset);
 }
 
-bool ABasePlayer::CalcCharacterFrontMagicCircleLocation(FVector Offset, FVector& Location)
+bool ABasePlayer::LocateCharacterFrontMagicCircle(FVector Offset, FVector& Location)
 {
 	FVector Chest = GetChestLocation();
 	FRotator Rotator = GetCharacterFrontMagicCircleRotator();
@@ -334,17 +322,17 @@ bool ABasePlayer::CalcCharacterFrontMagicCircleLocation(FVector Offset, FVector&
 	return true;
 }
 
-bool ABasePlayer::CalcFloorMagicCircleLocation(FVector Offset, FVector& Location)
+bool ABasePlayer::LocateCalcFloorMagicCircle(FVector Offset, FVector& Location)
 {
 	return false;
 }
 
-bool ABasePlayer::CalcTopDownMagicCircleLocation(FVector Offset, FVector& Location)
+bool ABasePlayer::LocateTopDownMagicCircle(FVector Offset, FVector& Location)
 {
 	return false;
 }
 
-bool ABasePlayer::CalcFlyMagicCircleLocation(FVector Offset, FVector& Location)
+bool ABasePlayer::LocateCalcFlyMagicCircle(FVector Offset, FVector& Location)
 {
 	return false;
 }

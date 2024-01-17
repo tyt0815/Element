@@ -82,8 +82,6 @@ private:
 	*/
 public:
 	FVector GetCameraLookAtLocation();
-	float GetSpringArmVelocity();
-	FVector GetCameraVelocity();
 
 private:
 	void ZoomOutCamera();
@@ -121,10 +119,10 @@ public:
 	bool FindFloorMagicCircleLocation(FVector FlyLocation, FVector& FloorLocation);
 
 	FVector GetChestLocation();
-	bool CalcCharacterFrontMagicCircleLocation(FVector Offset, FVector& Location);
-	bool CalcFloorMagicCircleLocation(FVector Offset, FVector& Location);
-	bool CalcTopDownMagicCircleLocation(FVector Offset, FVector& Location);
-	bool CalcFlyMagicCircleLocation(FVector Offset, FVector& Location);
+	bool LocateCharacterFrontMagicCircle(FVector Offset, FVector& Location);
+	bool LocateCalcFloorMagicCircle(FVector Offset, FVector& Location);
+	bool LocateTopDownMagicCircle(FVector Offset, FVector& Location);
+	bool LocateCalcFlyMagicCircle(FVector Offset, FVector& Location);
 	bool IsBlocked(FVector Start, FVector End, FVector& BlockedLocation);
 	bool IsCoolDown(FTimerHandle& CoolTimer);
 	FRotator GetCharacterFrontMagicCircleRotator();
