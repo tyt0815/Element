@@ -29,7 +29,7 @@ enum class ECastedMagic : uint8
 };
 
 UENUM(BlueprintType)
-enum class EFourElement : uint8
+enum EFourElement : uint8
 {
 	EPE_None = 0 UMETA(DisplayName = "None"),
 	EPE_Ignis = 0x1 UMETA(DisplayName = "Ignis"),

@@ -55,10 +55,12 @@ void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		Input->BindAction(AttackAction, ETriggerEvent::Started, this, &ABasePlayer::AttackStarted);
 		Input->BindAction(AttackAction, ETriggerEvent::Ongoing, this, &ABasePlayer::AttackOngoing);
 		Input->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ABasePlayer::AttackTriggered);
+		Input->BindAction(AttackAction, ETriggerEvent::Canceled, this, &ABasePlayer::AttackTriggered);
 
 		Input->BindAction(CastAction, ETriggerEvent::Started, this, &ABasePlayer::CastStarted);
 		Input->BindAction(CastAction, ETriggerEvent::Ongoing, this, &ABasePlayer::CastOngoing);
 		Input->BindAction(CastAction, ETriggerEvent::Triggered, this, &ABasePlayer::CastTriggered);
+		Input->BindAction(CastAction, ETriggerEvent::Canceled, this, &ABasePlayer::CastTriggered);
 
 		Input->BindAction(ElementSelectAction1, ETriggerEvent::Started, this, &ABasePlayer::ElementSelectAction1Started);
 		Input->BindAction(ElementSelectAction2, ETriggerEvent::Started, this, &ABasePlayer::ElementSelectAction2Started);
@@ -155,27 +157,114 @@ void ABasePlayer::AttackTriggered(const FInputActionInstance& Instance)
 
 void ABasePlayer::CastStarted(const FInputActionInstance& Instance)
 {
-	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied)
+	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied && ElementsSelectedArray[1] != -1)
 	{
 		switch (ElementsArray[ElementsSelectedArray[0]] | ElementsArray[ElementsSelectedArray[1]])
 		{
-			case 
+		case EFourElement::EPE_Ignis:
+			CastedMagic = ECastedMagic::ECM_II;
+			break;
+		case EFourElement::EPE_Aqua:
+			CastedMagic = ECastedMagic::ECM_AA;
+			break;
+		case EFourElement::EPE_Ventus:
+			CastedMagic = ECastedMagic::ECM_VV;
+			break; 
+		case EFourElement::EPE_Terra:
+			CastedMagic = ECastedMagic::ECM_TT;
+			break;
+		case EFourElement::EPE_Ignis | EFourElement::EPE_Ventus:
+			CastedMagic = ECastedMagic::ECM_IV;
+			break;
+		case EFourElement::EPE_Ventus | EFourElement::EPE_Aqua:
+			CastedMagic = ECastedMagic::ECM_VA;
+			break;
+		case EFourElement::EPE_Aqua | EFourElement::EPE_Terra:
+			CastedMagic = ECastedMagic::ECM_AT;
+			break;
+		case EFourElement::EPE_Terra | EFourElement::EPE_Ignis:
+			CastedMagic = ECastedMagic::ECM_TI;
+			break;
 		default:
+			SCREEN_LOG_NONE_KEY(TEXT("Not Castable Combination!"));
 			return;
 			break;
 		}
 		PlayerActionState = EPlayerActionState::EPAS_Casting;
 		CameraState = EPlayerCameraState::EPCS_ZoomIn;
+		UseSelectedElements();
 	}
 }
 
 void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
 {
+	if (PlayerActionState == EPlayerActionState::EPAS_Casting)
+	{
+		switch (CastedMagic)
+		{
+		case ECastedMagic::ECM_II:
+			break;
+		case ECastedMagic::ECM_AA:
+			break;
+		case ECastedMagic::ECM_VV:
+			break;
+		case ECastedMagic::ECM_TT:
+			break;
+		case ECastedMagic::ECM_IV:
+			break;
+		case ECastedMagic::ECM_VA:
+			break;
+		case ECastedMagic::ECM_AT:
+			break;
+		case ECastedMagic::ECM_TI:
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 void ABasePlayer::CastTriggered(const FInputActionInstance& Instance)
 {
-	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
+	if (PlayerActionState == EPlayerActionState::EPAS_Casting)
+	{
+		if (PlayerActionState == EPlayerActionState::EPAS_Casting)
+		{
+			switch (CastedMagic)
+			{
+			case ECastedMagic::ECM_II:
+				MagicII_FlameStrike();
+				break;
+			case ECastedMagic::ECM_AA:
+				MagicAA_Heal();
+				break;
+			case ECastedMagic::ECM_VV:
+				MagicVV_Penetration();
+				break;
+			case ECastedMagic::ECM_TT:
+				MagicTT_Teleport();
+				break;
+			case ECastedMagic::ECM_IV:
+				MagicIV_Explosion();
+				break;
+			case ECastedMagic::ECM_VA:
+				MagicVA_Tornado();
+				break;
+			case ECastedMagic::ECM_AT:
+				MagicAT_Summon();
+				break;
+			case ECastedMagic::ECM_TI:
+				MagicTI_Meteorite();
+				break;
+			default:
+				break;
+			}
+		}
+
+		PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
+		CastedMagic = ECastedMagic::ECM_None;
+		CameraState = EPlayerCameraState::EPCS_ZoomOut;
+	}
 }
 
 void ABasePlayer::ElementSelectAction1Started(const FInputActionInstance& Instance)
@@ -438,6 +527,38 @@ void ABasePlayer::UseSelectedElements()
 	}
 	EmptyElementsSeletedArray();
 	UpdateElementSlotUI();
+}
+
+void ABasePlayer::MagicII_FlameStrike()
+{
+}
+
+void ABasePlayer::MagicAA_Heal()
+{
+}
+
+void ABasePlayer::MagicVV_Penetration()
+{
+}
+
+void ABasePlayer::MagicTT_Teleport()
+{
+}
+
+void ABasePlayer::MagicIV_Explosion()
+{
+}
+
+void ABasePlayer::MagicVA_Tornado()
+{
+}
+
+void ABasePlayer::MagicAT_Summon()
+{
+}
+
+void ABasePlayer::MagicTI_Meteorite()
+{
 }
 
 void ABasePlayer::UpdateElementSlotUI()

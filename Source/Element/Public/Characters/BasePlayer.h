@@ -131,6 +131,14 @@ public:
 	void EmptyElementsSeletedArray();
 	void SelectElement(uint8 Index);
 	void UseSelectedElements();
+	void MagicII_FlameStrike();
+	void MagicAA_Heal();
+	void MagicVV_Penetration();
+	void MagicTT_Teleport();
+	void MagicIV_Explosion();
+	void MagicVA_Tornado();
+	void MagicAT_Summon();
+	void MagicTI_Meteorite();
 
 	void UpdateElementSlotUI();
 
