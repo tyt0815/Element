@@ -29,10 +29,4 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere)
 	class UAttributeComponent* Attributes;
-
-	/*
-	* Math
-	*/
-protected:
-	FVector VectorClamp(const FVector& Vector, const FVector& MinVector, const FVector& MaxVector);
 };

@@ -8,10 +8,18 @@ enum class EPlayerActionState : uint8
 };
 
 UENUM(BlueprintType)
-enum class EPlayerCastedMagic : uint8
+enum class ECastedMagic : uint8
 {
-	EPCM_None UMETA(DisplayName = "None"),
-	EPCM_MagicBullet UMETA(DisplayName = "MagicBullet")
+	ECM_None UMETA(DisplayName = "None"),
+	ECM_MagicBullet UMETA(DisplayName = "MagicBullet"),
+	ECM_II UMETA(DisplayName = "Ignis + Ignis"),
+	ECM_AA UMETA(DisplayName = "Aqua + Aqua"),
+	ECM_VV UMETA(DisplayName = "Ventus + Ventus"),
+	ECM_TT UMETA(DisplayName = "Terra + Terra"),
+	ECM_IV UMETA(DisplayName = "Ignis + Ventus"),
+	ECM_VA UMETA(DisplayName = "Ventus + Aqua"),
+	ECM_AT UMETA(DisplayName = "Aqua + Terra"),
+	ECM_TI UMETA(DisplayName = "Terra + Ignis")
 };
 
 UENUM(BlueprintType)

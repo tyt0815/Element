@@ -138,37 +138,10 @@ void ABasePlayer::AttackTriggered(const FInputActionInstance& Instance)
 
 void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
 {
-	ZoomInCamera();
-	
-	PlayerActionState = EPlayerActionState::EPAS_Casting;
-	FVector FloorLocation;
-	/*if (FindFloorMagicCircleLocation(GetMagicCircleMiddlePointLocation(FVector(GetCastableRange(MagicCircleRange), 0, 0)), FloorLocation))
-	{
-		DRAW_SPHERE_SINGLE_FRAME(FloorLocation);
-	}*/
-	if (LocateFlyMagicCircle(FVector(MagicCircleRange, 0.0f, 0.0f), FloorLocation))
-	{
-		DRAW_SPHERE_SINGLE_FRAME(FloorLocation);
-	}
 }
 
 void ABasePlayer::CastTriggered(const FInputActionInstance& Instance)
 {
-	ZoomOutCamera();
-	FVector Offset(GetCastableRange(MagicCircleRange), 0, 0);
-	FVector FlyLocation = GetMagicCircleMiddlePointLocation(Offset);
-	FVector FloorLocation;
-	if(FindFloorMagicCircleLocation(GetMagicCircleMiddlePointLocation(FVector(GetCastableRange(MagicCircleRange), 0, 0)), FloorLocation))
-	{
-		DRAW_SPHERE_COLOR(FloorLocation, FColor::Green);
-	}
-
-	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
-
-	if (ElementsSelectedArray[ElementsSelectedArray.Num() - 1] != -1)
-	{
-		UseSelectedElements();
-	}
 }
 
 void ABasePlayer::ElementSelectAction1Started(const FInputActionInstance& Instance)
@@ -215,93 +188,6 @@ void ABasePlayer::ZoomInCamera()
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	bUseControllerRotationYaw = true;
-}
-
-/*
-ActorLocation에서 Z축방향으로 어느정도 더한 위치(Chest쯤)
-*/
-FVector ABasePlayer::GetMagicCircleMiddlePointLocation()
-{
-	return GetActorLocation() + FVector(0, 0, MagicCircleMiddlePointOffset);
-}
-
-/*
-ActorLocation에서 Z축방향으로 어느정도 더한 위치(Chest쯤)에서 LookAt방향으로 Offset만큼 더한 위치(LookAt - Chest벡터를 x축으로 하는 좌표계 기준)
-*/
-FVector ABasePlayer::GetMagicCircleMiddlePointLocation(FVector Offset)
-{
-	FRotator Rotator = GetMagicCircleRotator();
-	FVector x = UKismetMathLibrary::GetForwardVector(Rotator);
-	FVector y = UKismetMathLibrary::GetRightVector(Rotator);
-	FVector z = UKismetMathLibrary::GetUpVector(Rotator);
-	FVector Start = GetMagicCircleMiddlePointLocation();
-	return Start + (x * Offset.X) + (y * Offset.Y) + (z * Offset.Z);
-}
-
-FRotator ABasePlayer::GetMagicCircleRotator()
-{
-	FVector x = GetCameraLookAtLocation() - GetMagicCircleMiddlePointLocation();
-	FVector y = ViewCamera->GetRightVector();
-	FVector z = x.Cross(y);
-	y = z.Cross(x);
-	FMatrix RotationMatrix(x, y, z, FVector::ZeroVector);
-	FRotator Rotator = RotationMatrix.Rotator();
-	return Rotator;
-}
-
-float ABasePlayer::GetCastableRange(float Range)
-{
-	FVector LineStart = GetMagicCircleMiddlePointLocation();
-	FVector Offset(Range, 0, 0);
-	FVector LineEnd = GetMagicCircleMiddlePointLocation(Offset);
-	TArray<AActor*> ActorsToIgnore;
-	FHitResult HitResult;
-	UKismetSystemLibrary::LineTraceSingle(
-		this,
-		LineStart,
-		LineEnd,
-		ETraceTypeQuery::TraceTypeQuery1,
-		false,
-		ActorsToIgnore,
-		EDrawDebugTrace::None,
-		HitResult,
-		true
-	);
-	if (HitResult.GetActor() != nullptr)
-	{
-		return (HitResult.Location - LineStart).Size();
-	}
-	return Range;
-}
-
-bool ABasePlayer::FindFloorMagicCircleLocation(FVector FlyLocation, FVector& FloorLocation)
-{
-	FVector Offset(0, 0, 0);
-	FVector Start = GetMagicCircleMiddlePointLocation(Offset) - FVector(0, 0, 25.0f);
-	FVector End = FlyLocation - FVector(0, 0, 25.0f);
-	TArray<AActor*> ActorsToIgnore;
-	FHitResult HitResult;
-	UKismetSystemLibrary::BoxTraceSingle(
-		this,
-		Start,
-		End,
-		FVector(0, 0, 25),
-		FRotator::ZeroRotator,
-		ETraceTypeQuery::TraceTypeQuery1,
-		false,
-		ActorsToIgnore,
-		EDrawDebugTrace::None,
-		HitResult,
-		true
-	);
-	bool IsFloor = HitResult.Normal.Dot(FVector::ZAxisVector) <  1 / FMath::Sqrt(2.0f) ? false : true;
-	if (HitResult.GetActor() != nullptr && IsFloor)
-	{
-		FloorLocation = HitResult.ImpactPoint;
-		return true;
-	}
-
-	return false;
 }
 
 FVector ABasePlayer::GetChestLocation()
@@ -365,11 +251,6 @@ bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 	}
 
 	Location = End;
-	return false;
-}
-
-bool ABasePlayer::LocateTopDownMagicCircle(FVector Offset, FVector& Location)
-{
 	return false;
 }
 
@@ -447,14 +328,9 @@ FRotator ABasePlayer::GetFloorMagicCircleRotator()
 	return FRotator();
 }
 
-FRotator ABasePlayer::GetTopDownMagicCircleLocation()
-{
-	return FRotator();
-}
-
 FRotator ABasePlayer::GetFlyMagicCircleRotator()
 {
-	return FRotator();
+	return ViewCamera->GetComponentRotation();
 }
 
 void ABasePlayer::InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth)

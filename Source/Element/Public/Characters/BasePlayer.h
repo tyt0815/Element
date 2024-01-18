@@ -113,22 +113,14 @@ private:
 	* 전투 시스템
 	*/
 public:
-	FVector GetMagicCircleMiddlePointLocation();
-	FVector GetMagicCircleMiddlePointLocation(FVector Offset);
-	FRotator GetMagicCircleRotator();
-	float GetCastableRange(float Range);
-	bool FindFloorMagicCircleLocation(FVector FlyLocation, FVector& FloorLocation);
-
 	FVector GetChestLocation();
 	bool LocateCharacterFrontMagicCircle(FVector Offset, FVector& Location);
 	bool LocateFloorMagicCircle(FVector Offset, FVector& Location);
-	bool LocateTopDownMagicCircle(FVector Offset, FVector& Location);
 	bool LocateFlyMagicCircle(FVector Offset, FVector& Location);
 	bool IsBlocked(FVector Start, FVector End, FVector& BlockedLocation);
 	bool IsCoolDown(FTimerHandle& CoolTimer);
 	FRotator GetCharacterFrontMagicCircleRotator();
 	FRotator GetFloorMagicCircleRotator();
-	FRotator GetTopDownMagicCircleLocation();
 	FRotator GetFlyMagicCircleRotator();
 	void InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
 	void InitElementsReadyArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
@@ -142,13 +134,6 @@ public:
 	void ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass);
 
 private:
-
-	UPROPERTY(EditAnywhere, Category = "Magic");
-	float MagicCircleMiddlePointOffset = 70.0f;
-
-	
-
-	///////////////////////////////////////////////
 	UPROPERTY(EditAnywhere, Category = "MagicCircle");
 	float MagicCircleRange = 1000.0f;
 
@@ -180,7 +165,7 @@ private:
 
 	
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
-	EPlayerCastedMagic PlayerCastedMagic = EPlayerCastedMagic::EPCM_None;
+	ECastedMagic CastedMagic = ECastedMagic::ECM_None;
 	TArray<EFourElement> ElementsArray;
 	TArray<EFourElement> ElementsReadyArray;
 	TArray<int8> ElementsSelectedArray;
