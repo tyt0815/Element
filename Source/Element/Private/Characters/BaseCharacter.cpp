@@ -28,7 +28,6 @@ void ABaseCharacter::BeginPlay()
 	
 	Attributes->SetHP(Attributes->GetMaxHP());
 	Attributes->SetMP(Attributes->GetMaxMP());
-	SCREEN_LOG(3, TEXT("Sibal"));
 }
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -43,5 +42,4 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 
 void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
-	SCREEN_LOG_NONE_KEY(FString("GetHit is not implemetated: ") + GetName());
 }

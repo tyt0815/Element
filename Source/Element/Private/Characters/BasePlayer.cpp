@@ -37,10 +37,8 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 void ABasePlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	ZoomOutCamera();
-	SCREEN_LOG(0, FString::SanitizeFloat(SpringArm->TargetArmLength));
-	SCREEN_LOG(1, ViewCamera->GetRelativeLocation().ToString());
+	
+	SwitchCameraLocation();
 }
 
 void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -54,9 +52,11 @@ void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		Input->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
+		Input->BindAction(AttackAction, ETriggerEvent::Started, this, &ABasePlayer::AttackStarted);
 		Input->BindAction(AttackAction, ETriggerEvent::Ongoing, this, &ABasePlayer::AttackOngoing);
 		Input->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ABasePlayer::AttackTriggered);
 
+		Input->BindAction(CastAction, ETriggerEvent::Started, this, &ABasePlayer::CastStarted);
 		Input->BindAction(CastAction, ETriggerEvent::Ongoing, this, &ABasePlayer::CastOngoing);
 		Input->BindAction(CastAction, ETriggerEvent::Triggered, this, &ABasePlayer::CastTriggered);
 
@@ -115,25 +115,58 @@ void ABasePlayer::Look(const FInputActionInstance& Instance)
 	}
 }
 
+void ABasePlayer::AttackStarted(const FInputActionInstance& Instance)
+{
+	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied)
+	{
+		PlayerActionState = EPlayerActionState::EPAS_Casting;
+		CastedMagic = ECastedMagic::ECM_MagicBullet;
+		CameraState = EPlayerCameraState::EPCS_ZoomIn;
+	}
+}
+
 void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 {
-	ZoomInCamera();
-	FVector MagicCircleLocation;
-	FVector OffsetVector;
-	OffsetVector.X = MagicBulletLocationOffset.X;
-	OffsetVector.Y = FMath::RandRange(-MagicBulletLocationOffset.Y, MagicBulletLocationOffset.Y);
-	OffsetVector.Z = FMath::RandRange(-MagicBulletLocationOffset.Z, MagicBulletLocationOffset.Z);
-	if (IsCoolDown(MagicBulletTimer) && LocateCharacterFrontMagicCircle(OffsetVector, MagicCircleLocation))
+	if (CastedMagic == ECastedMagic::ECM_MagicBullet && IsCoolDown(MagicBulletTimer))
 	{
-		FRotator SpawnRotator = GetCharacterFrontMagicCircleRotator();
-		ActivateMagicCircle(MagicCircleLocation, SpawnRotator, MagicBulletRange, MagicBulletCircleClass);
-		GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
+		FVector MagicCircleLocation;
+		FVector OffsetVector;
+		OffsetVector.X = MagicBulletLocationOffset.X;
+		OffsetVector.Y = FMath::RandRange(-MagicBulletLocationOffset.Y, MagicBulletLocationOffset.Y);
+		OffsetVector.Z = FMath::RandRange(-MagicBulletLocationOffset.Z, MagicBulletLocationOffset.Z);
+		if (LocateCharacterFrontMagicCircle(OffsetVector, MagicCircleLocation))
+		{
+			FRotator SpawnRotator = GetCharacterFrontMagicCircleRotator();
+			ActivateMagicCircle(MagicCircleLocation, SpawnRotator, MagicBulletRange, MagicBulletCircleClass);
+			GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
+		}
 	}
 }
 
 void ABasePlayer::AttackTriggered(const FInputActionInstance& Instance)
 {
-	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
+	if (PlayerActionState == EPlayerActionState::EPAS_Casting && CastedMagic == ECastedMagic::ECM_MagicBullet)
+	{
+		PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
+		CastedMagic = ECastedMagic::ECM_None;
+		CameraState = EPlayerCameraState::EPCS_ZoomOut;
+	}
+}
+
+void ABasePlayer::CastStarted(const FInputActionInstance& Instance)
+{
+	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied)
+	{
+		switch (ElementsArray[ElementsSelectedArray[0]] | ElementsArray[ElementsSelectedArray[1]])
+		{
+			case 
+		default:
+			return;
+			break;
+		}
+		PlayerActionState = EPlayerActionState::EPAS_Casting;
+		CameraState = EPlayerCameraState::EPCS_ZoomIn;
+	}
 }
 
 void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
@@ -142,6 +175,7 @@ void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
 
 void ABasePlayer::CastTriggered(const FInputActionInstance& Instance)
 {
+	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 }
 
 void ABasePlayer::ElementSelectAction1Started(const FInputActionInstance& Instance)
@@ -169,16 +203,29 @@ FVector ABasePlayer::GetCameraLookAtLocation()
 	return ViewCamera->GetComponentLocation() + (ViewCamera->GetForwardVector() * LookAtOffset);
 }
 
+void ABasePlayer::SwitchCameraLocation()
+{
+	switch (CameraState)
+	{
+	case EPlayerCameraState::EPCS_ZoomOut:
+		ZoomOutCamera();
+		break;
+	case EPlayerCameraState::EPCS_ZoomIn:
+		ZoomInCamera();
+		break;
+	default:
+		ZoomOutCamera();
+		break;
+	}
+}
+
 void ABasePlayer::ZoomOutCamera()
 {
-	if (PlayerActionState != EPlayerActionState::EPAS_Casting)
-	{
-		SpringArm->TargetArmLength = FMath::Lerp<float, float>(SpringArm->TargetArmLength, OriginSpringArmLength, CameraMoveRate);
-		ViewCamera->SetRelativeLocation(FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), OriginCameraLocation, CameraMoveRate));
-		GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		bUseControllerRotationYaw = false;
-	}
+	SpringArm->TargetArmLength = FMath::Lerp<float, float>(SpringArm->TargetArmLength, OriginSpringArmLength, CameraMoveRate);
+	ViewCamera->SetRelativeLocation(FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), OriginCameraLocation, CameraMoveRate));
+	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	bUseControllerRotationYaw = false;
 }
 
 void ABasePlayer::ZoomInCamera()

@@ -32,8 +32,10 @@ protected:
 private:	
 	void Move(const FInputActionInstance& Instance);
 	void Look(const FInputActionInstance& Instance);
+	void AttackStarted(const FInputActionInstance& Instance);
 	void AttackOngoing(const FInputActionInstance& Instance);
 	void AttackTriggered(const FInputActionInstance& Instance);
+	void CastStarted(const FInputActionInstance& Instance);
 	void CastOngoing(const FInputActionInstance& Instance);
 	void CastTriggered(const FInputActionInstance& Instance);
 	void ElementSelectAction1Started(const FInputActionInstance& Instance);
@@ -84,13 +86,14 @@ public:
 	FVector GetCameraLookAtLocation();
 
 protected:
+	void SwitchCameraLocation();
+	void ZoomOutCamera();
+	void ZoomInCamera();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "View");
 	UCameraComponent* ViewCamera;
 
 private:
-	void ZoomOutCamera();
-	void ZoomInCamera();
-
 	UPROPERTY(VisibleAnywhere, Category = "View");
 	USpringArmComponent* SpringArm;
 
@@ -108,6 +111,7 @@ private:
 
 	float OriginSpringArmLength;
 	FVector OriginCameraLocation;
+	EPlayerCameraState CameraState = EPlayerCameraState::EPCS_ZoomOut;
 
 	/*
 	* 전투 시스템

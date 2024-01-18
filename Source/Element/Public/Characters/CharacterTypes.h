@@ -6,6 +6,12 @@ enum class EPlayerActionState : uint8
 	EPAS_Unoccupied UMETA(DisplayName = "Unoccupied"),
 	EPAS_Casting UMETA(DisplayName = "Casting")
 };
+UENUM(BlueprintType)
+enum class EPlayerCameraState : uint8
+{
+	EPCS_ZoomOut UMETA(DisplayName = "ZoomOut"),
+	EPCS_ZoomIn UMETA(DisplayName = "ZoomIn")
+};
 
 UENUM(BlueprintType)
 enum class ECastedMagic : uint8
