@@ -146,7 +146,7 @@ void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
 	{
 		DRAW_SPHERE_SINGLE_FRAME(FloorLocation);
 	}*/
-	if (LocateFloorMagicCircle(FVector(MagicCircleRange, 0.0f, 0.0f), FloorLocation))
+	if (LocateFlyMagicCircle(FVector(MagicCircleRange, 0.0f, 0.0f), FloorLocation))
 	{
 		DRAW_SPHERE_SINGLE_FRAME(FloorLocation);
 	}
@@ -375,7 +375,24 @@ bool ABasePlayer::LocateTopDownMagicCircle(FVector Offset, FVector& Location)
 
 bool ABasePlayer::LocateFlyMagicCircle(FVector Offset, FVector& Location)
 {
-	return false;
+	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * FlyCastableRange;
+	FVector Block;
+	if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
+	{
+		Location = Block;
+		return false;
+	}
+	FVector End = Start + ViewCamera->GetForwardVector() * Offset.X + ViewCamera->GetRightVector() * Offset.Y + ViewCamera->GetUpVector() * Offset.Z;
+	if (IsBlocked(Start, End, Block))
+	{
+		Location = Block;
+	}
+	else
+	{
+		Location = End;
+	}
+
+	return true;
 }
 /// <summary>
 /// LineTrace로 두 위치 사이에 Actor가 있는지 확인한다.
