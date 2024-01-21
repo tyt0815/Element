@@ -1,13 +1,16 @@
 #include "Characters/BasePlayer.h"
+#include "Components/SceneComponent.h"
+#include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Components/SceneComponent.h"
+#include "GameFramework/Controller.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "GameFramework/Controller.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Element/DebugMacro.h"
 #include "Magic/MagicCircle.h"
@@ -350,7 +353,7 @@ bool ABasePlayer::LocateCharacterFrontMagicCircle(FVector Offset, FVector& Locat
 
 bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 {
-	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * FlyCastableRange;
+	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleRange;
 	FVector Block;
 	if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
 	{
@@ -392,7 +395,7 @@ bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 
 bool ABasePlayer::LocateFlyMagicCircle(FVector Offset, FVector& Location)
 {
-	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * FlyCastableRange;
+	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleRange;
 	FVector Block;
 	if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
 	{
@@ -531,6 +534,7 @@ void ABasePlayer::UseSelectedElements()
 
 void ABasePlayer::MagicII_FlameStrike()
 {
+	// UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, )
 }
 
 void ABasePlayer::MagicAA_Heal()
