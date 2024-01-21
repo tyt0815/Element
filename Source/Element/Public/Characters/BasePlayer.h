@@ -8,8 +8,10 @@ class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
 class UCameraComponent;
+class UNiagaraSystem;
+class UNiagaraComponent;
 class UPlayerOverlay;
-class AMagicCircle;
+class ABaseMagic;
 
 struct FInputActionInstance;
 
@@ -43,40 +45,40 @@ private:
 	void ElementSelectAction3Started(const FInputActionInstance& Instance);
 	void ElementSelectAction4Started(const FInputActionInstance& Instance);
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Input | InputMappingContext");
+	UPROPERTY(EditAnywhere, Category = "Input | InputMappingContext");
 	UInputMappingContext* KBMMappingContext = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Input | InputAction");
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* MoveAction = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Input | InputAction");
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* LookAction = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Input | InputAction");
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* JumpAction = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Input | InputAction");
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* AttackAction = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Input | InputAction");
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* CastAction = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Input | InputAction");
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* ElementSelectAction1 = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Input | InputAction");
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* ElementSelectAction2 = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Input | InputAction");
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* ElementSelectAction3 = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Input | InputAction");
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* ElementSelectAction4 = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Locomotion");
+	UPROPERTY(EditAnywhere, Category = "Locomotion");
 	float WalkSpeed;
 	
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Locomotion");
+	UPROPERTY(EditAnywhere, Category = "Locomotion");
 	float RunSpeed;
 
 	/*
@@ -90,23 +92,23 @@ protected:
 	void ZoomOutCamera();
 	void ZoomInCamera();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BasePlayer | Camera");
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly);
 	UCameraComponent* ViewCamera;
 
 private:
-	UPROPERTY(VisibleAnywhere, Category = "BasePlayer | Camera");
+	UPROPERTY(VisibleAnywhere);
 	USpringArmComponent* SpringArm;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Camera");
+	UPROPERTY(EditAnywhere, Category = "View");
 	float LookAtOffset = 5000.0f;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Camera");
+	UPROPERTY(EditAnywhere, Category = "View");
 	float ZoomSpringArmLength;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Camera");
+	UPROPERTY(EditAnywhere, Category = "View");
 	FVector ZoomCameraLocation;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Camera");
+	UPROPERTY(EditAnywhere, Category = "View");
 	float CameraMoveRate = 0.1;
 
 	float OriginSpringArmLength;
@@ -140,31 +142,35 @@ public:
 	void MagicAT_Summon();
 	void MagicTI_Meteorite();
 	void UpdateElementSlotUI();
-	void ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass);
+	UNiagaraComponent* SpawnMagicCircle(FVector Location, FRotator Rotator, UNiagaraSystem* MagicCircle);
+	ABaseMagic* SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass);
 
 private:
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | MagicCircle");
+	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
 	float ChestLocationZOffset = 70.0f;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | MagicCircle");
+	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
 	float MagicCircleRange;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | MagicCircle | CharacterFrontMagicCircle");
+	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
 	float CharacterFrontCastableRange;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | MagicCircle | FlyMagicCircle");
+	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
 	FVector FlyMagicCircleBoxTraceHalf;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Magic | Magic Bullet");
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
+	UNiagaraSystem* MagicBulletCircle;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
+	TSubclassOf<ABaseMagic> MagicBulletClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	float MagicBulletCoolTime;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Magic | Magic Bullet");
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	FVector MagicBulletLocationOffset;
 
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Magic | Magic Bullet");
-	TSubclassOf<AMagicCircle> MagicBulletCircleClass;
-
-	UPROPERTY(EditAnywhere, Category = "BasePlayer | Magic | Magic Bullet");
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	float MagicBulletRange = 2000.0f;
 	
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;

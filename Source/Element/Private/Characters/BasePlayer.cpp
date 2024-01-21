@@ -4,6 +4,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -13,7 +14,6 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "Element/DebugMacro.h"
-#include "Magic/MagicCircle.h"
 #include "Magic/BaseMagic.h"
 #include "HUDs/PlayerHUD.h"
 #include "HUDs/PlayerOverlay.h"
@@ -142,7 +142,8 @@ void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 		if (LocateCharacterFrontMagicCircle(OffsetVector, MagicCircleLocation))
 		{
 			FRotator SpawnRotator = GetCharacterFrontMagicCircleRotator();
-			ActivateMagicCircle(MagicCircleLocation, SpawnRotator, MagicBulletRange, MagicBulletCircleClass);
+			SpawnMagicCircle(MagicCircleLocation, SpawnRotator, MagicBulletCircle);
+			SpawnMagicActor(MagicCircleLocation, SpawnRotator, MagicBulletClass);
 			GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
 		}
 	}
@@ -570,20 +571,27 @@ void ABasePlayer::UpdateElementSlotUI()
 	PlayerOverlay->SetElementSlots(ElementsArray, ElementsReadyArray, ElementsSelectedArray);
 }
 
-void ABasePlayer::ActivateMagicCircle(FVector Location, FRotator Rotator, float Range, const TSubclassOf<AMagicCircle>& MagicCircleClass)
+UNiagaraComponent* ABasePlayer::SpawnMagicCircle(FVector Location, FRotator Rotator, UNiagaraSystem* MagicCircle)
 {
-	AMagicCircle* MagicCircle = nullptr;
 	UWorld* World = GetWorld();
-	if (World && MagicCircleClass)
+	if (World && MagicCircle)
 	{
-		MagicCircle = World->SpawnActor<AMagicCircle>(MagicCircleClass, Location, Rotator);
-		if (MagicCircle != nullptr)
-		{
-			MagicCircle->SetOwner(this);
-			MagicCircle->SetInstigator(this);
-			MagicCircle->Activate(Location, Rotator, Range);
-		}
+		return UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, MagicCircle ,Location, Rotator);
 	}
+	return nullptr;
+}
+
+ABaseMagic* ABasePlayer::SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass)
+{
+	UWorld* World = GetWorld();
+	if (World && MagicClass)
+	{
+		ABaseMagic* Magic = World->SpawnActor<ABaseMagic>(MagicClass, Location, Rotator);
+		Magic->SetOwner(this);
+		Magic->SetInstigator(this);
+		return Magic;
+	}
+	return nullptr;
 }
 
 void ABasePlayer::InitPlayerOverlay()
