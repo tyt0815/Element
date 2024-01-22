@@ -20,12 +20,11 @@ public:
 	void InitSlotArrays();
 	void SetElementSlots(const TArray<EFourElement>& ElementsArray,
 		const TArray<EFourElement>& ElementsReadyArray,
-		const TArray<int8>& ElementsSelectedArray
+		const TArray<EFourElement>& ElementsSelectedArray
 	);
 
 private:
 	void SetElementSlots(const TArray<EFourElement>& ElementsArray, UHorizontalBox* Slots);
-	void SetSelectedSlot(const TArray<EFourElement>& ElementsArray, const TArray<int8>& ElementsSelectedArray);
 
 	UPROPERTY(meta = (BindWidget))
 	UHorizontalBox* ElementSlots;

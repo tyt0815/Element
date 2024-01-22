@@ -50,8 +50,14 @@ void ABaseMagic::BeginPlay()
 
 void ABaseMagic::Activate_Implementation(FVector Location, FRotator Rotator, float Range)
 {
+	InitActorsToIgnore();
+	MagicRange = Range;
+}
+
+void ABaseMagic::InitActorsToIgnore()
+{
 	ActorsToIgnore.Empty();
-	ActorsToIgnore.Add(GetOwner()); 
+	ActorsToIgnore.Add(GetOwner());
 }
 
 void ABaseMagic::Deactivate_Implementation()
@@ -72,7 +78,7 @@ void ABaseMagic::BoxTrace(TArray<FHitResult>& HitResults)
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		HitResults,
 		true
 	);
@@ -102,7 +108,7 @@ void ABaseMagic::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		}
 		UGameplayStatics::ApplyDamage(
 			HitResults[i].GetActor(),
-			1,
+			Damage,
 			GetInstigatorController(),
 			this,
 			UDamageType::StaticClass()

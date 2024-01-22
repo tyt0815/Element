@@ -10,8 +10,6 @@ ABaseMagicProjectile::ABaseMagicProjectile(): ABaseMagic()
 	ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
 	ProjectileMovementComponent->InitialSpeed = 5000.0f;
 	ProjectileMovementComponent->MaxSpeed = 5000.0f;
-
-	MagicRange = 100000.0f;
 }
 
 void ABaseMagicProjectile::Tick(float DeltaTime)
@@ -33,7 +31,6 @@ void ABaseMagicProjectile::BeginPlay()
 void ABaseMagicProjectile::Activate_Implementation(FVector Location, FRotator Rotator, float Range)
 {
 	Super::Activate_Implementation(Location, Rotator, Range);
-	MagicRange = Range;
 }
 
 void ABaseMagicProjectile::Deactivate_Implementation()

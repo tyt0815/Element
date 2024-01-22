@@ -23,9 +23,11 @@ protected:
 	virtual void BeginPlay() override;
 
 	/*
-	* Components Basic
+	* Magic Basic
 	*/
 public:
+	FORCEINLINE void SetMagicRange(float Range) { MagicRange = Range; }
+
 	UFUNCTION(BlueprintNativeEvent, Category = "Magic")
 	void Activate(FVector Location, FRotator Rotator, float Range);
 	virtual void Activate_Implementation(FVector Location, FRotator Rotator, float Range);
@@ -34,10 +36,9 @@ public:
 	void Deactivate();
 	virtual void Deactivate_Implementation();
 
-	float MagicRange;
-
 protected:
 	void BoxTrace(TArray<FHitResult>& HitResults);
+	void InitActorsToIgnore();
 	
 	UFUNCTION()
 	virtual void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -72,4 +73,6 @@ protected:
 	FRotator BoxTraceOrientation;
 
 	TArray<AActor*> ActorsToIgnore;
+	float MagicRange = 100000.0f;
+	float Damage;
 };

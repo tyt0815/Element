@@ -30,6 +30,11 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 	SpringArm->bUsePawnControlRotation = true;
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(SpringArm);
+	AimingMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AimingMesh"));
+	AimingMeshComponent->SetupAttachment(GetRootComponent());
+	AimingMeshComponent->SetVisibility(true);
+	AimingMeshComponent->SetGenerateOverlapEvents(false);
+	AimingMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	InitElementsArray(EFourElement::EPE_Ignis, EFourElement::EPE_Aqua, EFourElement::EPE_Ventus, EFourElement::EPE_Terra);
@@ -89,6 +94,7 @@ void ABasePlayer::BeginPlay()
 
 	OriginSpringArmLength = SpringArm->TargetArmLength;
 	OriginCameraLocation = ViewCamera->GetRelativeLocation();
+	AimingMeshComponent->SetVisibility(false);
 
 	InitPlayerOverlay();
 	UpdateElementSlotUI();
@@ -143,7 +149,7 @@ void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 		{
 			FRotator SpawnRotator = GetCharacterFrontMagicCircleRotator();
 			SpawnMagicCircle(MagicCircleLocation, SpawnRotator, MagicBulletCircle);
-			SpawnMagicActor(MagicCircleLocation, SpawnRotator, MagicBulletClass);
+			SpawnMagicActor(MagicCircleLocation, SpawnRotator, MagicBulletClass, MagicBulletRange);
 			GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
 		}
 	}
@@ -161,9 +167,9 @@ void ABasePlayer::AttackTriggered(const FInputActionInstance& Instance)
 
 void ABasePlayer::CastStarted(const FInputActionInstance& Instance)
 {
-	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied && ElementsSelectedArray[1] != -1)
+	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied && IsElementSeleted())
 	{
-		switch (ElementsArray[ElementsSelectedArray[0]] | ElementsArray[ElementsSelectedArray[1]])
+		switch (GetSelectedElement(0) | GetSelectedElement(1))
 		{
 		case EFourElement::EPE_Ignis:
 			CastedMagic = ECastedMagic::ECM_II;
@@ -196,7 +202,6 @@ void ABasePlayer::CastStarted(const FInputActionInstance& Instance)
 		}
 		PlayerActionState = EPlayerActionState::EPAS_Casting;
 		CameraState = EPlayerCameraState::EPCS_ZoomIn;
-		UseSelectedElements();
 	}
 }
 
@@ -204,23 +209,48 @@ void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
 {
 	if (PlayerActionState == EPlayerActionState::EPAS_Casting)
 	{
+		FVector AimingLocation;
 		switch (CastedMagic)
 		{
 		case ECastedMagic::ECM_II:
+		{
+			ShowFloorAimingCircle();
 			break;
+		}
 		case ECastedMagic::ECM_AA:
 			break;
 		case ECastedMagic::ECM_VV:
 			break;
 		case ECastedMagic::ECM_TT:
+			if (LocateFlyMagicCircle(FVector::XAxisVector * MagicCircleRange, AimingLocation))
+			{
+				if (AimingMeshComponent)
+				{
+					AimingMeshComponent->SetWorldLocation(AimingLocation);
+				}
+			}
 			break;
 		case ECastedMagic::ECM_IV:
 			break;
 		case ECastedMagic::ECM_VA:
+			if (LocateFloorMagicCircle(FVector::ZeroVector, AimingLocation))
+			{
+				if (AimingMeshComponent)
+				{
+					AimingMeshComponent->SetWorldLocation(AimingLocation);
+				}
+			}
 			break;
 		case ECastedMagic::ECM_AT:
 			break;
 		case ECastedMagic::ECM_TI:
+			if (LocateFloorMagicCircle(FVector::ZeroVector, AimingLocation))
+			{
+				if (AimingMeshComponent)
+				{
+					AimingMeshComponent->SetWorldLocation(AimingLocation);
+				}
+			}
 			break;
 		default:
 			break;
@@ -243,7 +273,7 @@ void ABasePlayer::CastTriggered(const FInputActionInstance& Instance)
 				MagicAA_Heal();
 				break;
 			case ECastedMagic::ECM_VV:
-				MagicVV_Penetration();
+				MagicVV_Piercing();
 				break;
 			case ECastedMagic::ECM_TT:
 				MagicTT_Teleport();
@@ -264,10 +294,7 @@ void ABasePlayer::CastTriggered(const FInputActionInstance& Instance)
 				break;
 			}
 		}
-
-		PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
-		CastedMagic = ECastedMagic::ECM_None;
-		CameraState = EPlayerCameraState::EPCS_ZoomOut;
+		CastEnd();
 	}
 }
 
@@ -335,33 +362,56 @@ FVector ABasePlayer::GetChestLocation()
 	return GetActorLocation() + FVector(0, 0, ChestLocationZOffset);
 }
 
+FVector ABasePlayer::GetCharacterFrontMagicCircle()
+{
+	return GetChestLocation() + ViewCamera->GetRightVector() * ZoomCameraLocation.Y + (GetActorForwardVector() * CharacterFrontCastableRange);
+}
+
+EFourElement ABasePlayer::GetSelectedElement(uint8 i)
+{
+	if ((i < 0 || i > ElementsSelectedArray.Num()) || (ElementsSelectedArray[i] < 0 || ElementsSelectedArray[i] > ElementsArray.Num()))
+	{
+		return EFourElement::EPE_None;
+	}
+	return ElementsArray[ElementsSelectedArray[i]];
+}
+
+void ABasePlayer::SetSelectedElement(uint8 i, EFourElement Element)
+{
+	if ((i < 0 || i > ElementsSelectedArray.Num()) && (ElementsSelectedArray[i] < 0 || ElementsSelectedArray[i] > ElementsArray.Num()))
+	{
+		return;
+	}
+	ElementsArray[ElementsSelectedArray[i]] = Element;
+}
+
 bool ABasePlayer::LocateCharacterFrontMagicCircle(FVector Offset, FVector& Location)
 {
 	FVector Chest = GetChestLocation();
-	FRotator Rotator = GetCharacterFrontMagicCircleRotator();
-	FVector x = UKismetMathLibrary::GetForwardVector(Rotator);
-	FVector y = UKismetMathLibrary::GetRightVector(Rotator);
-	FVector z = UKismetMathLibrary::GetUpVector(Rotator);
-	FVector CastableStart = Chest + x * CharacterFrontCastableRange;
+	FVector CastableStart = GetCharacterFrontMagicCircle();
 	FVector Dummy;
 	if (IsBlocked(Chest, CastableStart, Dummy))
 	{
 		return false;
 	}
+	FRotator Rotator = GetCharacterFrontMagicCircleRotator();
+	FVector x = UKismetMathLibrary::GetForwardVector(Rotator);
+	FVector y = UKismetMathLibrary::GetRightVector(Rotator);
+	FVector z = UKismetMathLibrary::GetUpVector(Rotator);
 	Location = CastableStart + x * Offset.X + y * Offset.Y + z * Offset.Z;
 	return true;
 }
 
 bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 {
-	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleRange;
+	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleCastableRange;
 	FVector Block;
 	if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
 	{
 		Location = Block;
 		return false;
 	}
-	FVector End = Start + ViewCamera->GetForwardVector() * Offset.X + ViewCamera->GetRightVector() * Offset.Y + ViewCamera->GetUpVector() * Offset.Z;
+	FVector End = Start + ViewCamera->GetForwardVector() * (Offset.X + MagicCircleRange) + ViewCamera->GetRightVector() * Offset.Y + ViewCamera->GetUpVector() * Offset.Z;
 	
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -382,7 +432,7 @@ bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 
 	if (HitResult.GetActor())
 	{
-		Location = HitResult.ImpactPoint;
+		Location = HitResult.ImpactPoint + FVector::ZAxisVector;
 		if (HitResult.ImpactNormal.Dot(FVector::ZAxisVector) < FMath::Cos(FMath::DegreesToRadians(45)))
 		{
 			return false;
@@ -396,7 +446,7 @@ bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 
 bool ABasePlayer::LocateFlyMagicCircle(FVector Offset, FVector& Location)
 {
-	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleRange;
+	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleCastableRange;
 	FVector Block;
 	if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
 	{
@@ -453,9 +503,14 @@ bool ABasePlayer::IsCoolDown(FTimerHandle& CoolTimer)
 	return GetWorldTimerManager().GetTimerRemaining(CoolTimer) < 0;
 }
 
+bool ABasePlayer::IsElementSeleted()
+{
+	return ElementsSelectedArray[0] != -1 && ElementsSelectedArray[1] != -1;
+}
+
 FRotator ABasePlayer::GetCharacterFrontMagicCircleRotator()
 {
-	FVector x = GetCameraLookAtLocation() - GetChestLocation();
+	FVector x = GetCameraLookAtLocation() - GetCharacterFrontMagicCircle();
 	FVector y = ViewCamera->GetRightVector();
 	FVector z = x.Cross(y);
 	y = z.Cross(x);
@@ -500,7 +555,7 @@ void ABasePlayer::EmptyElementsSeletedArray()
 
 void ABasePlayer::SelectElement(uint8 Index)
 {
-	if (ElementsSelectedArray[0] == Index - 1) return;
+	if (ElementsSelectedArray[0] == Index - 1 || CastedMagic > ECastedMagic::ECM_MagicBullet) return;
 	int n = ElementsSelectedArray.Num();
 	for (int i = 1; i < n; ++i)
 	{
@@ -512,14 +567,14 @@ void ABasePlayer::SelectElement(uint8 Index)
 
 void ABasePlayer::UseSelectedElements()
 {
-
+	if (!IsElementSeleted()) return;
 	TArray<EFourElement> Selected;
 	int n = ElementsSelectedArray.Num();
 	int m = ElementsReadyArray.Num();
 	for (int i = 0; i < n; ++i)
 	{
-		Selected.Add(ElementsArray[ElementsSelectedArray[n - i - 1]]);
-		ElementsArray[ElementsSelectedArray[n - i - 1]] = ElementsReadyArray[i];
+		Selected.Add(GetSelectedElement(n - i - 1));
+		SetSelectedElement(n - i - 1, ElementsReadyArray[i]);
 	}
 	for (int i = n; i < m; ++i)
 	{
@@ -535,14 +590,18 @@ void ABasePlayer::UseSelectedElements()
 
 void ABasePlayer::MagicII_FlameStrike()
 {
-	// UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, )
+	FVector CircleLocation;
+	if (LocateFloorMagicCircle(FVector::ZeroVector, CircleLocation))
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FlameStrikeCircle, CircleLocation);
+	}
 }
 
 void ABasePlayer::MagicAA_Heal()
 {
 }
 
-void ABasePlayer::MagicVV_Penetration()
+void ABasePlayer::MagicVV_Piercing()
 {
 }
 
@@ -566,9 +625,23 @@ void ABasePlayer::MagicTI_Meteorite()
 {
 }
 
+void ABasePlayer::CastEnd()
+{
+	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
+	CastedMagic = ECastedMagic::ECM_None;
+	CameraState = EPlayerCameraState::EPCS_ZoomOut;
+	UseSelectedElements();
+	AimingMeshComponent->SetVisibility(false);
+}
+
 void ABasePlayer::UpdateElementSlotUI()
 {
-	PlayerOverlay->SetElementSlots(ElementsArray, ElementsReadyArray, ElementsSelectedArray);
+	TArray<EFourElement> SelectedArray;
+	for (int i = 0; i < ElementsSelectedArray.Num(); ++i)
+	{
+		SelectedArray.Add(GetSelectedElement(i));
+	}
+	PlayerOverlay->SetElementSlots(ElementsArray, ElementsReadyArray, SelectedArray);
 }
 
 UNiagaraComponent* ABasePlayer::SpawnMagicCircle(FVector Location, FRotator Rotator, UNiagaraSystem* MagicCircle)
@@ -581,7 +654,7 @@ UNiagaraComponent* ABasePlayer::SpawnMagicCircle(FVector Location, FRotator Rota
 	return nullptr;
 }
 
-ABaseMagic* ABasePlayer::SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass)
+ABaseMagic* ABasePlayer::SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass, float Range)
 {
 	UWorld* World = GetWorld();
 	if (World && MagicClass)
@@ -589,9 +662,25 @@ ABaseMagic* ABasePlayer::SpawnMagicActor(FVector Location, FRotator Rotator, TSu
 		ABaseMagic* Magic = World->SpawnActor<ABaseMagic>(MagicClass, Location, Rotator);
 		Magic->SetOwner(this);
 		Magic->SetInstigator(this);
+		Magic->Activate(Location, Rotator, Range);
 		return Magic;
 	}
 	return nullptr;
+}
+
+void ABasePlayer::ShowFloorAimingCircle()
+{
+	FVector AimingLocation;
+	if (!AimingMeshComponent) return;
+	if (LocateFloorMagicCircle(FVector::ZeroVector, AimingLocation))
+	{
+		AimingMeshComponent->SetWorldLocation(AimingLocation);
+		AimingMeshComponent->SetVisibility(true);
+	}
+	else
+	{
+		AimingMeshComponent->SetVisibility(false);
+	}
 }
 
 void ABasePlayer::InitPlayerOverlay()

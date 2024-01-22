@@ -119,15 +119,19 @@ private:
 	* 전투 시스템
 	*/
 public:
+	EFourElement GetSelectedElement(uint8 i);
+	void SetSelectedElement(uint8 i, EFourElement Element);
 	FVector GetChestLocation();
+	FVector GetCharacterFrontMagicCircle();
+	FRotator GetCharacterFrontMagicCircleRotator();
+	FRotator GetFloorMagicCircleRotator();
+	FRotator GetFlyMagicCircleRotator();
 	bool LocateCharacterFrontMagicCircle(FVector Offset, FVector& Location);
 	bool LocateFloorMagicCircle(FVector Offset, FVector& Location);
 	bool LocateFlyMagicCircle(FVector Offset, FVector& Location);
 	bool IsBlocked(FVector Start, FVector End, FVector& BlockedLocation);
 	bool IsCoolDown(FTimerHandle& CoolTimer);
-	FRotator GetCharacterFrontMagicCircleRotator();
-	FRotator GetFloorMagicCircleRotator();
-	FRotator GetFlyMagicCircleRotator();
+	bool IsElementSeleted();
 	void InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
 	void InitElementsReadyArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
 	void EmptyElementsSeletedArray();
@@ -135,27 +139,35 @@ public:
 	void UseSelectedElements();
 	void MagicII_FlameStrike();
 	void MagicAA_Heal();
-	void MagicVV_Penetration();
+	void MagicVV_Piercing();
 	void MagicTT_Teleport();
 	void MagicIV_Explosion();
 	void MagicVA_Tornado();
 	void MagicAT_Summon();
 	void MagicTI_Meteorite();
+	void CastEnd();
 	void UpdateElementSlotUI();
 	UNiagaraComponent* SpawnMagicCircle(FVector Location, FRotator Rotator, UNiagaraSystem* MagicCircle);
-	ABaseMagic* SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass);
+	ABaseMagic* SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass, float Range);
+	void ShowFloorAimingCircle();
 
 private:
-	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* AimingMeshComponent;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Circle");
 	float ChestLocationZOffset = 70.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
-	float MagicCircleRange;
-
-	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Circle");
 	float CharacterFrontCastableRange;
 
-	UPROPERTY(EditAnywhere, Category = "Magic | MagicCircle");
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Circle");
+	float MagicCircleCastableRange;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Circle");
+	float MagicCircleRange;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Circle");
 	FVector FlyMagicCircleBoxTraceHalf;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
@@ -172,7 +184,56 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	float MagicBulletRange = 2000.0f;
-	
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Flame Strike");
+	UNiagaraSystem* FlameStrikeCircle;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Flame Strike");
+	TSubclassOf<ABaseMagic> FlameStrikeClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Heal");
+	UNiagaraSystem* HealCircle;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Heal");
+	TSubclassOf<ABaseMagic> HealClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
+	UNiagaraSystem* PiercingCircle;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
+	TSubclassOf<ABaseMagic> PiercingClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Teleport");
+	UNiagaraSystem* TeleportCircle;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Teleport");
+	TSubclassOf<ABaseMagic> TeleportClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Explosion");
+	UNiagaraSystem* ExplosionCircle;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Explosion");
+	TSubclassOf<ABaseMagic> ExplosionClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Tornado");
+	UNiagaraSystem* TornadoCircle;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Tornado");
+	TSubclassOf<ABaseMagic> TornadoClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Summon");
+	UNiagaraSystem* SummonCircle;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Summon");
+	TSubclassOf<ABaseMagic> SummonClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Meteorite");
+	UNiagaraSystem* MeteoriteCircle;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Meteorite");
+	TSubclassOf<ABaseMagic> MeteoriteClass;
+
+
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	ECastedMagic CastedMagic = ECastedMagic::ECM_None;
 	TArray<EFourElement> ElementsArray;
