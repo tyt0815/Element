@@ -20,14 +20,27 @@ void UAttributeComponent::BeginPlay()
 		
 }
 
-void UAttributeComponent::ReceiveDamage(float Damage)
+void UAttributeComponent::ReceiveDamage(float Value)
 {
-	HP = FMath::Clamp(HP - Damage, 0.0f, MaxHP);
-	SCREEN_LOG(0, FString::SanitizeFloat(HP));
+	HP = FMath::Clamp(HP - Value, 0.0f, MaxHP);
+	if (GetOwner())
+	{
+		SCREEN_LOG_NONE_KEY(GetOwner()->GetName() + FString("'s HP: ") + FString::SanitizeFloat(HP));
+	}
 }
 
-void UAttributeComponent::UseMP(float MPCost)
+void UAttributeComponent::RecoveryHP(float Value)
 {
-	MP = FMath::Clamp(MP - MPCost, 0.0f, MaxMP);
+	ReceiveDamage(-Value);
+}
+
+void UAttributeComponent::UseMP(float Value)
+{
+	MP = FMath::Clamp(MP - Value, 0.0f, MaxMP);
+}
+
+void UAttributeComponent::RecoveryMP(float Value)
+{
+	UseMP(-Value);
 }
 

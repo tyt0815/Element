@@ -29,8 +29,10 @@ public:
 	FORCEINLINE void SetMaxMP(float n) { MaxMP = n; }
 	FORCEINLINE void SetHP(float n) {  HP = n; }
 	FORCEINLINE void SetMP(float n) {  MP = n; }
-	void ReceiveDamage(float Damage);
-	void UseMP(float MPCost);
+	void ReceiveDamage(float Value);
+	void RecoveryHP(float Value);
+	void UseMP(float Value);
+	void RecoveryMP(float Value);
 private:
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float MaxHP;

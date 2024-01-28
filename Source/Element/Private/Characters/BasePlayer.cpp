@@ -15,6 +15,8 @@
 
 #include "Element/DebugMacro.h"
 #include "Magic/BaseMagic.h"
+#include "Magic/BaseMagicProjectile.h"
+#include "Magic/Piercing.h"
 #include "HUDs/PlayerHUD.h"
 #include "HUDs/PlayerOverlay.h"
 
@@ -149,7 +151,12 @@ void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 		{
 			FRotator SpawnRotator = GetCharacterFrontMagicCircleRotator();
 			SpawnMagicCircle(MagicCircleLocation, SpawnRotator, MagicBulletCircle);
-			SpawnMagicActor(MagicCircleLocation, SpawnRotator, MagicBulletClass, MagicBulletRange);
+			ABaseMagicProjectile* MagicBullet = Cast<ABaseMagicProjectile>(SpawnMagicActor(MagicCircleLocation, SpawnRotator, MagicBulletClass));
+			if (MagicBullet)
+			{
+				MagicBullet->SetProjectileRange(MagicBulletRange);
+				MagicBullet->SetDamage(MagicBulletDamage);
+			}
 			GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
 		}
 	}
@@ -213,22 +220,14 @@ void ABasePlayer::CastOngoing(const FInputActionInstance& Instance)
 		switch (CastedMagic)
 		{
 		case ECastedMagic::ECM_II:
-		{
 			ShowFloorAimingCircle();
 			break;
-		}
 		case ECastedMagic::ECM_AA:
 			break;
 		case ECastedMagic::ECM_VV:
 			break;
 		case ECastedMagic::ECM_TT:
-			if (LocateFlyMagicCircle(FVector::XAxisVector * MagicCircleRange, AimingLocation))
-			{
-				if (AimingMeshComponent)
-				{
-					AimingMeshComponent->SetWorldLocation(AimingLocation);
-				}
-			}
+			ShowFlyAimingCircle();
 			break;
 		case ECastedMagic::ECM_IV:
 			break;
@@ -270,7 +269,7 @@ void ABasePlayer::CastTriggered(const FInputActionInstance& Instance)
 				MagicII_FlameStrike();
 				break;
 			case ECastedMagic::ECM_AA:
-				MagicAA_Heal();
+				MagicAA_HealOverTime();
 				break;
 			case ECastedMagic::ECM_VV:
 				MagicVV_Piercing();
@@ -416,13 +415,16 @@ bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
 	FHitResult HitResult;
-	UKismetSystemLibrary::BoxTraceSingle(
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
+	UKismetSystemLibrary::BoxTraceSingleForObjects(
 		this,
 		Start - ViewCamera->GetUpVector() * FlyMagicCircleBoxTraceHalf.Z,
 		End - ViewCamera->GetUpVector() * FlyMagicCircleBoxTraceHalf.Z,
 		FlyMagicCircleBoxTraceHalf,
 		FRotator::ZeroRotator,
-		ETraceTypeQuery::TraceTypeQuery1,
+		ObjectTypes,
 		false,
 		ActorsToIgnore,
 		EDrawDebugTrace::ForOneFrame,
@@ -472,10 +474,8 @@ bool ABasePlayer::LocateFlyMagicCircle(FVector Offset, FVector& Location)
 /// <param name="End">두번째 위치</param>
 /// <param name="BlockedLocation">막힌 위치를 반환한다. 막히지 않았을 경우 End위치를 반환한다.</param>
 /// <returns></returns>
-bool ABasePlayer::IsBlocked(FVector Start, FVector End, FVector& BlockedLocation)
+bool ABasePlayer::IsBlocked(FVector Start, FVector End, FVector& BlockedLocation, TArray<AActor*> ActorsToIgnore)
 {
-	
-	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
 	FHitResult HitResult;
 	UKismetSystemLibrary::LineTraceSingle(
@@ -593,20 +593,42 @@ void ABasePlayer::MagicII_FlameStrike()
 	FVector CircleLocation;
 	if (LocateFloorMagicCircle(FVector::ZeroVector, CircleLocation))
 	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FlameStrikeCircle, CircleLocation);
+		SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, FlameStrikeCircle);
+		ABaseMagic* FlameStrike = SpawnMagicActor(CircleLocation, FRotator::ZeroRotator, FlameStrikeClass);
+		if (FlameStrike)
+		{
+			FlameStrike->SetDamage(FlameStrikeDamage);
+		}
 	}
 }
 
-void ABasePlayer::MagicAA_Heal()
+void ABasePlayer::MagicAA_HealOverTime()
 {
+	FVector CircleLocation = GetUnderCharacterFeetLocation();
+	SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, HealOverTimeCircle);
+	HealOverTimeCharacter(AmountOfHealPerTime, HealCount, HealDelay);
 }
 
 void ABasePlayer::MagicVV_Piercing()
 {
+	FVector CircleLocation;
+	if (LocateCharacterFrontMagicCircle(FVector::ZeroVector, CircleLocation))
+	{
+		FRotator CircleRotator = GetCharacterFrontMagicCircleRotator();
+		SpawnMagicCircle(CircleLocation, CircleRotator, PiercingCircle);
+		APiercing* Piercing = Cast<APiercing>(SpawnMagicActor(CircleLocation, CircleRotator, PiercingClass));
+		if (Piercing)
+		{
+			Piercing->SetDamage(PiercingDamage);
+			Piercing->SetProjectileRange(PiercingRange);
+			Piercing->SetPiercingDelay(PiercingDelay);
+		}
+	}
 }
 
 void ABasePlayer::MagicTT_Teleport()
 {
+	
 }
 
 void ABasePlayer::MagicIV_Explosion()
@@ -654,15 +676,15 @@ UNiagaraComponent* ABasePlayer::SpawnMagicCircle(FVector Location, FRotator Rota
 	return nullptr;
 }
 
-ABaseMagic* ABasePlayer::SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass, float Range)
+ABaseMagic* ABasePlayer::SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass)
 {
 	UWorld* World = GetWorld();
 	if (World && MagicClass)
 	{
-		ABaseMagic* Magic = World->SpawnActor<ABaseMagic>(MagicClass, Location, Rotator);
-		Magic->SetOwner(this);
-		Magic->SetInstigator(this);
-		Magic->Activate(Location, Rotator, Range);
+		FActorSpawnParameters ActorSpawnParameters;
+		ActorSpawnParameters.Instigator = this;
+		ActorSpawnParameters.Owner = this;
+		ABaseMagic* Magic = World->SpawnActor<ABaseMagic>(MagicClass, Location, Rotator, ActorSpawnParameters);
 		return Magic;
 	}
 	return nullptr;
@@ -673,6 +695,21 @@ void ABasePlayer::ShowFloorAimingCircle()
 	FVector AimingLocation;
 	if (!AimingMeshComponent) return;
 	if (LocateFloorMagicCircle(FVector::ZeroVector, AimingLocation))
+	{
+		AimingMeshComponent->SetWorldLocation(AimingLocation);
+		AimingMeshComponent->SetVisibility(true);
+	}
+	else
+	{
+		AimingMeshComponent->SetVisibility(false);
+	}
+}
+
+void ABasePlayer::ShowFlyAimingCircle()
+{
+	FVector AimingLocation;
+	if (!AimingMeshComponent) return;
+	if (LocateFlyMagicCircle(FVector::XAxisVector * MagicCircleRange, AimingLocation))
 	{
 		AimingMeshComponent->SetWorldLocation(AimingLocation);
 		AimingMeshComponent->SetVisibility(true);

@@ -26,24 +26,19 @@ protected:
 	* Magic Basic
 	*/
 public:
-	FORCEINLINE void SetMagicRange(float Range) { MagicRange = Range; }
-
-	UFUNCTION(BlueprintNativeEvent, Category = "Magic")
-	void Activate(FVector Location, FRotator Rotator, float Range);
-	virtual void Activate_Implementation(FVector Location, FRotator Rotator, float Range);
-
-	UFUNCTION(BlueprintNativeEvent, Category = "Magic")
-	void Deactivate();
-	virtual void Deactivate_Implementation();
-
+	void SetDamage(float Value) { Damage = Value; }
 protected:
-	void BoxTrace(TArray<FHitResult>& HitResults);
 	void InitActorsToIgnore();
-	
+	void BoxTrace(FHitResult& HitResult);
+	void DamageActor(FHitResult& HitResult);
+	void EndMagicAfter(float Time);
+
+	UFUNCTION()
+	void EndMagic();
+
 	UFUNCTION()
 	virtual void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
 
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* Root;
@@ -66,13 +61,11 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceEnd;
 
-	UPROPERTY(EditAnywhere, Category = "Magic | Trace")
+
 	FVector BoxTraceHalfSize;
-
-	UPROPERTY(EditAnywhere, Category = "Magic | Trace")
 	FRotator BoxTraceOrientation;
-
 	TArray<AActor*> ActorsToIgnore;
-	float MagicRange = 100000.0f;
-	float Damage;
+	float Damage = 1;
+	bool IsActivated = false;
+	FVector SpawnedLocation;
 };

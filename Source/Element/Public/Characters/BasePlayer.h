@@ -119,6 +119,7 @@ private:
 	* 전투 시스템
 	*/
 public:
+	FORCEINLINE float GetMagicBulletRange() { return MagicBulletRange; }
 	EFourElement GetSelectedElement(uint8 i);
 	void SetSelectedElement(uint8 i, EFourElement Element);
 	FVector GetChestLocation();
@@ -129,7 +130,7 @@ public:
 	bool LocateCharacterFrontMagicCircle(FVector Offset, FVector& Location);
 	bool LocateFloorMagicCircle(FVector Offset, FVector& Location);
 	bool LocateFlyMagicCircle(FVector Offset, FVector& Location);
-	bool IsBlocked(FVector Start, FVector End, FVector& BlockedLocation);
+	bool IsBlocked(FVector Start, FVector End, FVector& BlockedLocation, TArray<AActor*> ActorsToIgnore = TArray<AActor*>());
 	bool IsCoolDown(FTimerHandle& CoolTimer);
 	bool IsElementSeleted();
 	void InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
@@ -138,7 +139,7 @@ public:
 	void SelectElement(uint8 Index);
 	void UseSelectedElements();
 	void MagicII_FlameStrike();
-	void MagicAA_Heal();
+	void MagicAA_HealOverTime();
 	void MagicVV_Piercing();
 	void MagicTT_Teleport();
 	void MagicIV_Explosion();
@@ -148,8 +149,9 @@ public:
 	void CastEnd();
 	void UpdateElementSlotUI();
 	UNiagaraComponent* SpawnMagicCircle(FVector Location, FRotator Rotator, UNiagaraSystem* MagicCircle);
-	ABaseMagic* SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass, float Range);
+	ABaseMagic* SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass);
 	void ShowFloorAimingCircle();
+	void ShowFlyAimingCircle();
 
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -171,9 +173,6 @@ private:
 	FVector FlyMagicCircleBoxTraceHalf;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
-	UNiagaraSystem* MagicBulletCircle;
-
-	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	TSubclassOf<ABaseMagic> MagicBulletClass;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
@@ -185,23 +184,44 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	float MagicBulletRange = 2000.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
+	float MagicBulletDamage = 1.0f;
+
 	UPROPERTY(EditAnywhere, Category = "Magic | Flame Strike");
 	UNiagaraSystem* FlameStrikeCircle;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Flame Strike");
 	TSubclassOf<ABaseMagic> FlameStrikeClass;
 
-	UPROPERTY(EditAnywhere, Category = "Magic | Heal");
-	UNiagaraSystem* HealCircle;
+	UPROPERTY(EditAnywhere, Category = "Magic | Flame Strike");
+	float FlameStrikeDamage = 1;
 
-	UPROPERTY(EditAnywhere, Category = "Magic | Heal");
-	TSubclassOf<ABaseMagic> HealClass;
+	UPROPERTY(EditAnywhere, Category = "Magic | Heal Over Time");
+	UNiagaraSystem* HealOverTimeCircle;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Heal Over Time");
+	float AmountOfHealPerTime;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Heal Over Time");
+	int HealCount;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Heal Over Time");
+	float HealDelay;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
 	UNiagaraSystem* PiercingCircle;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
 	TSubclassOf<ABaseMagic> PiercingClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
+	float PiercingDamage = 1;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
+	float PiercingRange = 1000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
+	float PiercingDelay = 0.01f;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Teleport");
 	UNiagaraSystem* TeleportCircle;
@@ -240,6 +260,7 @@ private:
 	TArray<EFourElement> ElementsReadyArray;
 	TArray<int8> ElementsSelectedArray;
 	FTimerHandle MagicBulletTimer;
+	FTimerHandle HealHandler;
 
 	/*
 	* HUD

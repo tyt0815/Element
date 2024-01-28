@@ -16,24 +16,13 @@ void ABaseMagicProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if ((SpawnedLocation - GetActorLocation()).Size() > MagicRange)
+	if ((SpawnedLocation - GetActorLocation()).Size() > ProjectileRange)
 	{
-		Deactivate_Implementation();
+		Destroy();
 	}
 }
 
 void ABaseMagicProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	SpawnedLocation = GetActorLocation();
-}
-
-void ABaseMagicProjectile::Activate_Implementation(FVector Location, FRotator Rotator, float Range)
-{
-	Super::Activate_Implementation(Location, Rotator, Range);
-}
-
-void ABaseMagicProjectile::Deactivate_Implementation()
-{
-	Super::Deactivate_Implementation();
 }

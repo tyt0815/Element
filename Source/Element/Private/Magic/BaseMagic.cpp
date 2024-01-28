@@ -37,55 +37,55 @@ ABaseMagic::ABaseMagic()
 void ABaseMagic::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ABaseMagic::BeginPlay()
 {
 	Super::BeginPlay();
-	HitBoxComponent->IgnoreActorWhenMoving(GetOwner(), true);
-	HitBoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ABaseMagic::OnBoxOverlap);
-	Tags.Add(TEXT("Magic"));
-}
 
-void ABaseMagic::Activate_Implementation(FVector Location, FRotator Rotator, float Range)
-{
+	SpawnedLocation = GetActorLocation();
+	HitBoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ABaseMagic::OnBoxOverlap);
+	HitBoxComponent->IgnoreActorWhenMoving(GetOwner(), true);
 	InitActorsToIgnore();
-	MagicRange = Range;
+	Tags.Add(TEXT("Magic"));
+
+	BoxTraceStart->SetRelativeLocation(HitBoxComponent->GetRelativeLocation() + FVector(-HitBoxComponent->GetScaledBoxExtent().X, 0.0f, 0.0f));
+	BoxTraceEnd->SetRelativeLocation(HitBoxComponent->GetRelativeLocation() + FVector(HitBoxComponent->GetScaledBoxExtent().X, 0.0f, 0.0f));
+	BoxTraceHalfSize = FVector(0.0f, HitBoxComponent->GetScaledBoxExtent().Y, HitBoxComponent->GetScaledBoxExtent().Z);
+	BoxTraceOrientation = GetActorRotation();
 }
 
 void ABaseMagic::InitActorsToIgnore()
 {
 	ActorsToIgnore.Empty();
-	ActorsToIgnore.Add(GetOwner());
+	if (GetOwner() != nullptr)
+	{
+		ActorsToIgnore.Add(GetOwner());
+	}
 }
 
-void ABaseMagic::Deactivate_Implementation()
-{
-	Destroy();
-}
-
-void ABaseMagic::BoxTrace(TArray<FHitResult>& HitResults)
+void ABaseMagic::BoxTrace(FHitResult& HitResult)
 {
 	FVector Start = BoxTraceStart->GetComponentLocation();
 	FVector End = BoxTraceEnd->GetComponentLocation();
-	UKismetSystemLibrary::BoxTraceMulti(
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
+	UKismetSystemLibrary::BoxTraceSingleForObjects(
 		this,
 		Start,
 		End,
 		BoxTraceHalfSize,
 		BoxTraceOrientation,
-		ETraceTypeQuery::TraceTypeQuery1,
+		ObjectTypes,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::None,
-		HitResults,
+		EDrawDebugTrace::ForDuration,
+		HitResult,
 		true
 	);
-	int n = HitResults.Num();
-	for (int i = 0; i < n; ++i)
+	if (HitResult.GetActor())
 	{
-		ActorsToIgnore.Add(HitResults[i].GetActor());
+		ActorsToIgnore.Add(HitResult.GetActor());
 	}
 }
 
@@ -93,25 +93,34 @@ void ABaseMagic::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag(TEXT("Magic"))) return;
+}
 
-	TArray<FHitResult> HitResults;
-	
-	BoxTrace(HitResults);
-
-	int n = HitResults.Num();
-	for (int i = 0; i < n; ++i)
+void ABaseMagic::DamageActor(FHitResult& HitResult)
+{
+	if (HitResult.GetActor())
 	{
-		IHitInterface* HitInterface = Cast<IHitInterface>(HitResults[i].GetActor());
+		IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
 		if (HitInterface)
 		{
-			HitInterface->Execute_GetHit(HitResults[i].GetActor(), HitResults[i].ImpactPoint, GetOwner());
+			HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
 		}
 		UGameplayStatics::ApplyDamage(
-			HitResults[i].GetActor(),
+			HitResult.GetActor(),
 			Damage,
 			GetInstigatorController(),
 			this,
 			UDamageType::StaticClass()
 		);
 	}
+}
+
+void ABaseMagic::EndMagicAfter(float Time)
+{
+	FTimerHandle DestroyTimer;
+	GetWorldTimerManager().SetTimer(DestroyTimer, this, &ABaseMagic::EndMagic, Time);
+}
+
+void ABaseMagic::EndMagic()
+{
+	Destroy();
 }

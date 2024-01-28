@@ -18,6 +18,12 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	//
+	// 기타
+	//
+public:
+	FORCEINLINE FVector GetUnderCharacterFeetLocation();
 	
 	/*
 	* 전투 시스템
@@ -27,6 +33,12 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
 protected:
+	void HealCharacter(float Value);
+
+	UFUNCTION()
+	void HealOverTimeCharacter(float Value, int Count, float Delay);
+
 	UPROPERTY(VisibleAnywhere)
 	class UAttributeComponent* Attributes;
 };
+//DECLARE_DELEGATE_FourParams()

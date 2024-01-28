@@ -21,12 +21,13 @@ protected:
 	* Projectile Attribute
 	*/
 public:
-	virtual void Activate_Implementation(FVector Location, FRotator Rotator, float Range);
-	virtual void Deactivate_Implementation();
+	FORCEINLINE void SetProjectileRange(float Range) { ProjectileRange = Range; }
+protected:
 
 private:
 	UPROPERTY(VisibleAnywhere);
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
-	FVector SpawnedLocation;
+	
+	float ProjectileRange = 100000.0f;
 };
