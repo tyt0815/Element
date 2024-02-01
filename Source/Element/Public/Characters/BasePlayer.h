@@ -12,6 +12,7 @@ class UNiagaraSystem;
 class UNiagaraComponent;
 class UPlayerOverlay;
 class ABaseMagic;
+class ABaseAiming;
 
 struct FInputActionInstance;
 
@@ -31,6 +32,10 @@ protected:
 	/*
 	* 기본 Movement, Input
 	*/
+public:
+	void InitMagicCircleDistVariationSpeed();
+	void IncreaseMagicCircleDistVariationSpeed();
+	void SetCurrMagicCircleDist(float Value);
 private:	
 	void Move(const FInputActionInstance& Instance);
 	void Look(const FInputActionInstance& Instance);
@@ -44,6 +49,13 @@ private:
 	void ElementSelectAction2Started(const FInputActionInstance& Instance);
 	void ElementSelectAction3Started(const FInputActionInstance& Instance);
 	void ElementSelectAction4Started(const FInputActionInstance& Instance);
+	void MouseWheelTriggered(const FInputActionInstance& Instance);
+	void SubSkill1Started(const FInputActionInstance& Instance);
+	void SubSkill1Ongoing(const FInputActionInstance& Instance);
+	void SubSkill1Triggered(const FInputActionInstance& Instance);
+	void SubSkill2Started(const FInputActionInstance& Instance);
+	void SubSkill2Ongoing(const FInputActionInstance& Instance);
+	void SubSkill2Triggered(const FInputActionInstance& Instance);
 
 	UPROPERTY(EditAnywhere, Category = "Input | InputMappingContext");
 	UInputMappingContext* KBMMappingContext = nullptr;
@@ -75,11 +87,22 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* ElementSelectAction4 = nullptr;
 
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
+	UInputAction* MouseWheelAction = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
+	UInputAction* SubSkill1Action = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
+	UInputAction* SubSkill2Action = nullptr;
+
 	UPROPERTY(EditAnywhere, Category = "Locomotion");
 	float WalkSpeed;
 	
 	UPROPERTY(EditAnywhere, Category = "Locomotion");
 	float RunSpeed;
+
+	float MagicCircleDistVariationSpeed;
 
 	/*
 	* 카메라
@@ -91,6 +114,7 @@ protected:
 	void SwitchCameraLocation();
 	void ZoomOutCamera();
 	void ZoomInCamera();
+	void ShakeCamera(float Power);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly);
 	UCameraComponent* ViewCamera;
@@ -113,6 +137,7 @@ private:
 
 	float OriginSpringArmLength;
 	FVector OriginCameraLocation;
+	FVector TargetCameraLocation;
 	EPlayerCameraState CameraState = EPlayerCameraState::EPCS_ZoomOut;
 
 	/*
@@ -141,21 +166,25 @@ public:
 	void MagicII_FlameStrike();
 	void MagicAA_HealOverTime();
 	void MagicVV_Piercing();
-	void MagicTT_Teleport();
+	void MagicTT_Portal();
 	void MagicIV_Explosion();
 	void MagicVA_Tornado();
 	void MagicAT_Summon();
 	void MagicTI_Meteorite();
 	void CastEnd();
 	void UpdateElementSlotUI();
+	ABaseAiming* SpawnAimingActor(TSubclassOf<ABaseAiming> AimingClass);
 	UNiagaraComponent* SpawnMagicCircle(FVector Location, FRotator Rotator, UNiagaraSystem* MagicCircle);
 	ABaseMagic* SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass);
 	void ShowFloorAimingCircle();
 	void ShowFlyAimingCircle();
 
 private:
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* AimingMeshComponent;
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Circle");
+	TSubclassOf<ABaseAiming> FloorAimingClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Circle");
+	TSubclassOf<ABaseAiming> FlyAimingClass;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Circle");
 	float ChestLocationZOffset = 70.0f;
@@ -171,6 +200,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Circle");
 	FVector FlyMagicCircleBoxTraceHalf;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
+	UNiagaraSystem* MagicBulletCircle;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	TSubclassOf<ABaseMagic> MagicBulletClass;
@@ -223,11 +255,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
 	float PiercingDelay = 0.01f;
 
-	UPROPERTY(EditAnywhere, Category = "Magic | Teleport");
-	UNiagaraSystem* TeleportCircle;
+	UPROPERTY(EditAnywhere, Category = "Magic | Portal");
+	TSubclassOf<ABaseMagic> PortalClass;
 
-	UPROPERTY(EditAnywhere, Category = "Magic | Teleport");
-	TSubclassOf<ABaseMagic> TeleportClass;
+	UPROPERTY(EditAnywhere, Category = "Magic | Portal");
+	float PortalLifeTime = 10.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Explosion");
 	UNiagaraSystem* ExplosionCircle;
@@ -261,6 +293,9 @@ private:
 	TArray<int8> ElementsSelectedArray;
 	FTimerHandle MagicBulletTimer;
 	FTimerHandle HealHandler;
+	ABaseAiming* FloorAimingActor;
+	ABaseAiming* FlyAimingActor;
+	float CurrMagicCircleDist;
 
 	/*
 	* HUD

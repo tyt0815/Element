@@ -27,8 +27,11 @@ protected:
 	*/
 public:
 	void SetDamage(float Value) { Damage = Value; }
+	virtual void InitActorsToIgnore();
+	virtual void InitBoxTraceObjectTypes();
 protected:
-	void InitActorsToIgnore();
+	void AddActorsToIgnore(AActor* Actor);
+	void RemoveActorsToIgnore(AActor* Actor);
 	void BoxTrace(FHitResult& HitResult);
 	void DamageActor(FHitResult& HitResult);
 	void EndMagicAfter(float Time);
@@ -37,17 +40,17 @@ protected:
 	void EndMagic();
 
 	UFUNCTION()
-	virtual void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	virtual void BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	virtual void EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* Root;
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* StaticMeshComponent;
-
-	UPROPERTY(VisibleAnywhere)
-	UNiagaraComponent* NiagaraComponent;
 
 	UPROPERTY(VisibleAnywhere);
 	UBoxComponent* HitBoxComponent;
@@ -61,11 +64,14 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceEnd;
 
-
 	FVector BoxTraceHalfSize;
 	FRotator BoxTraceOrientation;
 	TArray<AActor*> ActorsToIgnore;
 	float Damage = 1;
 	bool IsActivated = false;
 	FVector SpawnedLocation;
+	FTimerHandle DestroyTimer;
+	TArray<TEnumAsByte<EObjectTypeQuery>> BoxTraceObjectTypes;
+
+private:
 };

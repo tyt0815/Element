@@ -2,6 +2,7 @@
 #include "Components/Image.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/HorizontalBox.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Element/DebugMacro.h"
 #include "HUDs/ElementSlotWidget.h"
@@ -10,11 +11,6 @@ void UPlayerOverlay::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	InitSlotArrays();
-}
-
-void UPlayerOverlay::InitSlotArrays()
-{
 }
 
 void UPlayerOverlay::SetElementSlots(const TArray<EFourElement>& ElementsArray,

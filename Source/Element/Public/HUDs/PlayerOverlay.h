@@ -17,7 +17,6 @@ public:
 	* Elements
 	*/
 public:
-	void InitSlotArrays();
 	void SetElementSlots(const TArray<EFourElement>& ElementsArray,
 		const TArray<EFourElement>& ElementsReadyArray,
 		const TArray<EFourElement>& ElementsSelectedArray
