@@ -34,10 +34,11 @@ protected:
 	void AddActorsToIgnore(AActor* Actor);
 	void RemoveActorsToIgnore(AActor* Actor);
 	void BoxTrace(FHitResult& HitResult);
+	void BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore);
 	void DamageActor(FHitResult& HitResult, float Damage);
 	void EndMagicAfter(float Time);
 	virtual void BeginBoxOverlapExec(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {}
 	virtual void SetMultiStageHit(float Damage, float Delay);
 
 	UFUNCTION()

@@ -8,25 +8,29 @@ void ATornado::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	InitActorsToIgnore();
+	TArray<AActor*> FlyActorsToIgnore;
 	while (true)
 	{
 		FHitResult HitResult;
-		BoxTrace(HitResult);
+		BoxTrace(HitResult, FlyActorsToIgnore);
 		if (HitResult.GetActor() == nullptr) break;
 		if (HitResult.GetActor() == GetOwner())
 		{
 			ACharacter* Character = Cast<ACharacter>(HitResult.GetActor());
 			if (Character)
 			{
-				if (!IsTopLocation(Character))
+				UCharacterMovementComponent* MovementComponent = Character->GetCharacterMovement();
+				if (MovementComponent)
 				{
-					if (Character->GetCharacterMovement()->Velocity.Z < 1)
-						Character->GetCharacterMovement()->AddForce(FVector::ZAxisVector * 100000.0f);
-					Character->GetCharacterMovement()->Velocity.Z = UpSpeed;
+					if (!IsTopLocation(Character))
+					{
+						MovementComponent->AddInputVector(FVector::ZAxisVector);
+					}
+					else
+					{
+						MovementComponent->Velocity.Z = 0.0f;
+					}
 				}
-				else
-					Character->GetCharacterMovement()->Velocity.Z = TopSpeed;
 			}
 		}
 	}
@@ -35,6 +39,19 @@ void ATornado::Tick(float DeltaTime)
 bool ATornado::IsTopLocation(AActor* Actor)
 {
 	return Actor->GetActorLocation().Z >= TopLocation.Z - TopOffset;
+}
+
+void ATornado::BeginBoxOverlapExec(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	ACharacter* Character = Cast<ACharacter>(OtherActor);
+	if (Character)
+	{
+		UCharacterMovementComponent* MovementComponent = Character->GetCharacterMovement();
+		if (MovementComponent)
+		{
+			MovementComponent->SetMovementMode(EMovementMode::MOVE_Flying);
+		}
+	}
 }
 
 void ATornado::BeginPlay()
@@ -47,16 +64,19 @@ void ATornado::BeginPlay()
 	SetMultiStageHit(GetOwnerATK() * DamageCoefficient, MSHDelay);
 }
 
-void ATornado::InitActorsToIgnore()
-{
-	ActorsToIgnore.Empty();
-}
-
 void ATornado::EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	ACharacter* Character = Cast<ACharacter>(OtherActor);
-	if (Character && IsTopLocation(Character))
+	if (Character)
 	{
-		Character->GetCharacterMovement()->AddForce(UpForce * 10000000.0f * FVector::ZAxisVector);
+		UCharacterMovementComponent* MovementComponent = Character->GetCharacterMovement();
+		if (MovementComponent)
+		{
+			MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
+			if (IsTopLocation(Character))
+			{
+				MovementComponent->AddForce(UpForce * 10000000.0f * FVector::ZAxisVector);
+			}
+		}
 	}
 }

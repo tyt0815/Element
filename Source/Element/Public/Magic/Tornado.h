@@ -21,7 +21,8 @@ protected:
 
 protected:
 	bool IsTopLocation(AActor* Actor);
-	virtual void InitActorsToIgnore() override;
+	virtual void BeginBoxOverlapExec(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	virtual void EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
 
 	UPROPERTY(EditAnywhere, Category = Attribute)

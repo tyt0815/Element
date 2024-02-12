@@ -117,6 +117,29 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult)
 	}
 }
 
+void ABaseMagic::BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore)
+{
+	FVector Start = BoxTraceStart->GetComponentLocation();
+	FVector End = BoxTraceEnd->GetComponentLocation();
+	UKismetSystemLibrary::BoxTraceSingleForObjects(
+		this,
+		Start,
+		End,
+		BoxTraceHalfSize,
+		BoxTraceOrientation,
+		BoxTraceObjectTypes,
+		false,
+		Ignore,
+		EDrawDebugTrace::None,
+		HitResult,
+		true
+	);
+	if (HitResult.GetActor())
+	{
+		Ignore.Add(HitResult.GetActor());
+	}
+}
+
 void ABaseMagic::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -152,12 +175,6 @@ void ABaseMagic::EndMagicAfter(float Time)
 	GetWorldTimerManager().ClearTimer(DestroyTimer);
 	GetWorldTimerManager().SetTimer(DestroyTimer, this, &ABaseMagic::EndMagic, Time);
 }
-
-void ABaseMagic::BeginBoxOverlapExec(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-}
-
-
 
 void ABaseMagic::SetMultiStageHit(float Damage, float Delay)
 {
