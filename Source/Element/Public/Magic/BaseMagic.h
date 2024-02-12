@@ -9,6 +9,7 @@ class UArrowComponent;
 class USceneComponent;
 class UStaticMeshComponent;
 class UNiagaraComponent;
+class UAttributeComponent;
 
 UCLASS()
 class ELEMENT_API ABaseMagic : public AActor
@@ -26,15 +27,21 @@ protected:
 	* Magic Basic
 	*/
 public:
-	void SetDamage(float Value) { Damage = Value; }
 	virtual void InitActorsToIgnore();
 	virtual void InitBoxTraceObjectTypes();
 protected:
+	FORCEINLINE float GetOwnerATK();
 	void AddActorsToIgnore(AActor* Actor);
 	void RemoveActorsToIgnore(AActor* Actor);
 	void BoxTrace(FHitResult& HitResult);
-	void DamageActor(FHitResult& HitResult);
+	void DamageActor(FHitResult& HitResult, float Damage);
 	void EndMagicAfter(float Time);
+	virtual void BeginBoxOverlapExec(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	virtual void SetMultiStageHit(float Damage, float Delay);
+
+	UFUNCTION()
+	virtual void MultiStageHit(float Damage);
 
 	UFUNCTION()
 	void EndMagic();
@@ -64,14 +71,16 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceEnd;
 
+	UPROPERTY(EditAnywhere, Category = Attribute)
+	float DamageCoefficient = 1;
+
 	FVector BoxTraceHalfSize;
 	FRotator BoxTraceOrientation;
 	TArray<AActor*> ActorsToIgnore;
-	float Damage = 1;
-	bool IsActivated = false;
 	FVector SpawnedLocation;
-	FTimerHandle DestroyTimer;
 	TArray<TEnumAsByte<EObjectTypeQuery>> BoxTraceObjectTypes;
+	FTimerHandle DestroyTimer;
+	FTimerHandle MultiStageHitTimer;
 
-private:
+	class ABaseCharacter* Owner;
 };

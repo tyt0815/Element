@@ -17,7 +17,10 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	void SetAimingMeshVisibility(bool b);
+	virtual void SetActorHiddenInGame(bool bNewHidden) override;
+
+protected:
+	void SetOnlyOwnerSee(UMeshComponent* MeshComponent);
 
 private:
 

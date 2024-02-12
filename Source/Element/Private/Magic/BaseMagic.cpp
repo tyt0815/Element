@@ -8,6 +8,7 @@
 
 #include "Element/DebugMacro.h"
 #include "Interfaces/HitInterface.h"
+#include "Characters/BaseCharacter.h"
 
 ABaseMagic::ABaseMagic()
 {
@@ -23,6 +24,11 @@ ABaseMagic::ABaseMagic()
 	HitBoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("HitBox"));
 	HitBoxComponent->SetupAttachment(GetRootComponent());
 	HitBoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	HitBoxComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Overlap);
+	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
+	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Vehicle, ECollisionResponse::ECR_Overlap);
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 	ArrowComponent->SetupAttachment(GetRootComponent());
 	BoxTraceStart = CreateDefaultSubobject<USceneComponent>(TEXT("BoxTraceStart"));
@@ -44,8 +50,6 @@ void ABaseMagic::BeginPlay()
 	InitBoxTraceObjectTypes();
 
 	SpawnedLocation = GetActorLocation();
-	HitBoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ABaseMagic::BeginBoxOverlap);
-	HitBoxComponent->OnComponentEndOverlap.AddDynamic(this, &ABaseMagic::EndBoxOverlap);
 	HitBoxComponent->IgnoreActorWhenMoving(GetOwner(), true);
 	Tags.Add(TEXT("Magic"));
 
@@ -54,6 +58,10 @@ void ABaseMagic::BeginPlay()
 	BoxTraceHalfSize = FVector(0.0f, HitBoxComponent->GetScaledBoxExtent().Y, HitBoxComponent->GetScaledBoxExtent().Z);
 	BoxTraceOrientation = GetActorRotation();
 
+	HitBoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ABaseMagic::BeginBoxOverlap);
+	HitBoxComponent->OnComponentEndOverlap.AddDynamic(this, &ABaseMagic::EndBoxOverlap);
+
+	Owner = Cast<ABaseCharacter>(GetOwner());
 }
 
 void ABaseMagic::InitActorsToIgnore()
@@ -63,6 +71,11 @@ void ABaseMagic::InitActorsToIgnore()
 	{
 		ActorsToIgnore.Add(GetOwner());
 	}
+}
+
+float ABaseMagic::GetOwnerATK()
+{
+	return Owner ? Owner->GetATK() : 0;
 }
 
 void ABaseMagic::AddActorsToIgnore(AActor* Actor)
@@ -94,7 +107,7 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult)
 		BoxTraceObjectTypes,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		HitResult,
 		true
 	);
@@ -108,13 +121,14 @@ void ABaseMagic::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag(TEXT("Magic"))) return;
+	BeginBoxOverlapExec(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 }
 
 void ABaseMagic::EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 }
 
-void ABaseMagic::DamageActor(FHitResult& HitResult)
+void ABaseMagic::DamageActor(FHitResult& HitResult, float Damage)
 {
 	if (HitResult.GetActor())
 	{
@@ -137,6 +151,32 @@ void ABaseMagic::EndMagicAfter(float Time)
 {
 	GetWorldTimerManager().ClearTimer(DestroyTimer);
 	GetWorldTimerManager().SetTimer(DestroyTimer, this, &ABaseMagic::EndMagic, Time);
+}
+
+void ABaseMagic::BeginBoxOverlapExec(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+}
+
+
+
+void ABaseMagic::SetMultiStageHit(float Damage, float Delay)
+{
+	FTimerDelegate MultiStageHitDelegate;
+	MultiStageHitDelegate.BindUFunction(this, FName("MultiStageHit"), Damage);
+	MultiStageHit(Damage);
+	GetWorldTimerManager().SetTimer(MultiStageHitTimer, MultiStageHitDelegate, Delay, true, Delay);
+}
+
+void ABaseMagic::MultiStageHit(float Damage)
+{
+	InitActorsToIgnore();
+	while (true)
+	{
+		FHitResult HitResult;
+		BoxTrace(HitResult);
+		if (HitResult.GetActor() == nullptr) break;
+		DamageActor(HitResult, Damage);
+	}
 }
 
 void ABaseMagic::InitBoxTraceObjectTypes()

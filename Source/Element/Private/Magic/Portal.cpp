@@ -5,29 +5,31 @@
 
 APortal::APortal()
 {
-	HitBoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HitBoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	HitBoxComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Overlap);
 }
 
 void APortal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	if (OutPortal == nullptr) return;
-	FHitResult HitResult;
-	BoxTrace(HitResult);
-	if (HitResult.GetActor())
+	while (true)
 	{
-		OutPortal->AddActorsToIgnore(HitResult.GetActor());
-		HitResult.GetActor()->SetActorLocation(OutPortal->GetActorLocation(), false, nullptr, ETeleportType::TeleportPhysics);
-		ActorsToIgnore.Remove(HitResult.GetActor());
+		FHitResult HitResult;
+		BoxTrace(HitResult);
+		if (!HitResult.GetActor()) break;
+		TeleportActor(HitResult.GetActor());
 	}
+	
 }
 
 void APortal::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	HitBoxComponent->SetBoxExtent(FVector(10.0f, 50.0f, 100.0f));
+
+	EndMagicAfter(PortalLifeTime);
 }
 
 void APortal::SetOutPortal(APortal* Portal)
@@ -36,31 +38,17 @@ void APortal::SetOutPortal(APortal* Portal)
 	ActorsToIgnore.Add(Portal);
 }
 
-void APortal::SetPortalLifeTime(float Value)
+void APortal::TeleportActor(AActor* Actor)
 {
-	PortalLifeTime = Value;
-	EndMagicAfter(PortalLifeTime);
-}
-
-void APortal::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	/*Super::BeginBoxOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
-	if (OutPortal == nullptr) return;
-	FHitResult HitResult;
-	BoxTrace(HitResult);
-	if (HitResult.GetActor())
-	{
-		OutPortal->AddActorsToIgnore(HitResult.GetActor());
-		HitResult.GetActor()->SetActorLocation(OutPortal->GetActorLocation(), false, nullptr, ETeleportType::TeleportPhysics);
-		ActorsToIgnore.Remove(OtherActor);
-	}*/
+	OutPortal->AddActorsToIgnore(Actor);
+	Actor->SetActorLocation(OutPortal->GetActorLocation(), false, nullptr, ETeleportType::TeleportPhysics);
+	ActorsToIgnore.Remove(Actor);
 }
 
 void APortal::EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	Super::EndBoxOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
 	ActorsToIgnore.Remove(OtherActor);
-	SCREEN_LOG(1, OtherActor->GetName());
 }
 
 void APortal::InitActorsToIgnore()

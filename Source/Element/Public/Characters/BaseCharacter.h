@@ -6,6 +6,8 @@
 #include "CharacterTypes.h"
 #include "BaseCharacter.generated.h"
 
+class UAttributeComponent;
+
 UCLASS()
 class ELEMENT_API ABaseCharacter : public ACharacter, public IHitInterface
 {
@@ -24,11 +26,13 @@ protected:
 	//
 public:
 	FORCEINLINE FVector GetUnderCharacterFeetLocation();
+	float GetATK();
 	
 	/*
 	* 전투 시스템
 	*/
 public:
+	FORCEINLINE UAttributeComponent* GetAttributes() { return Attributes; }
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 
@@ -39,6 +43,5 @@ protected:
 	void HealOverTimeCharacter(float Value, int Count, float Delay);
 
 	UPROPERTY(VisibleAnywhere)
-	class UAttributeComponent* Attributes;
+	UAttributeComponent* Attributes;
 };
-//DECLARE_DELEGATE_FourParams()

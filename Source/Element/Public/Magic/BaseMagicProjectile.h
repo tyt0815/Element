@@ -23,11 +23,10 @@ protected:
 public:
 	FORCEINLINE void SetProjectileRange(float Range) { ProjectileRange = Range; }
 protected:
-
-private:
 	UPROPERTY(VisibleAnywhere);
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
-	
+private:
+	UPROPERTY(EditAnywhere, Category = Attribute)
 	float ProjectileRange = 100000.0f;
 };

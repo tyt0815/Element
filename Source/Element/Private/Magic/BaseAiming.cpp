@@ -12,15 +12,7 @@ ABaseAiming::ABaseAiming()
 	SetRootComponent(Arrow);
 	AimingMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Aiming"));
 	AimingMesh->SetupAttachment(GetRootComponent());
-	AimingMesh->bVisibleInRayTracing = false;
-	AimingMesh->bVisibleInRealTimeSkyCaptures = false;
-	AimingMesh->bVisibleInReflectionCaptures = false;
-	AimingMesh->bReceivesDecals = false;
-	AimingMesh->bOnlyOwnerSee = true;
-	AimingMesh->bUseAsOccluder = false;
-	AimingMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	AimingMesh->SetGenerateOverlapEvents(false);
-	AimingMesh->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
+	SetOnlyOwnerSee(AimingMesh);
 }
 
 void ABaseAiming::BeginPlay()
@@ -29,9 +21,23 @@ void ABaseAiming::BeginPlay()
 	
 }
 
-void ABaseAiming::SetAimingMeshVisibility(bool b)
+void ABaseAiming::SetActorHiddenInGame(bool bNewHidden)
 {
-	AimingMesh->SetVisibility(b);
+	Super::SetActorHiddenInGame(bNewHidden);
+	AimingMesh->SetHiddenInGame(bNewHidden);
+}
+
+void ABaseAiming::SetOnlyOwnerSee(UMeshComponent* MeshComponent)
+{
+	MeshComponent->bVisibleInRayTracing = false;
+	MeshComponent->bVisibleInRealTimeSkyCaptures = false;
+	MeshComponent->bVisibleInReflectionCaptures = false;
+	MeshComponent->bReceivesDecals = false;
+	MeshComponent->bOnlyOwnerSee = true;
+	MeshComponent->bUseAsOccluder = false;
+	MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MeshComponent->SetGenerateOverlapEvents(false);
+	MeshComponent->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
 }
 
 void ABaseAiming::Tick(float DeltaTime)

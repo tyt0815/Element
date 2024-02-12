@@ -144,7 +144,6 @@ private:
 	* 전투 시스템
 	*/
 public:
-	FORCEINLINE float GetMagicBulletRange() { return MagicBulletRange; }
 	EFourElement GetSelectedElement(uint8 i);
 	void SetSelectedElement(uint8 i, EFourElement Element);
 	FVector GetChestLocation();
@@ -173,6 +172,7 @@ public:
 	void MagicTI_Meteorite();
 	void CastEnd();
 	void UpdateElementSlotUI();
+	void UseFloorMagic(UNiagaraSystem* MagicCircle, TSubclassOf<ABaseMagic> MagicClass);
 	ABaseAiming* SpawnAimingActor(TSubclassOf<ABaseAiming> AimingClass);
 	UNiagaraComponent* SpawnMagicCircle(FVector Location, FRotator Rotator, UNiagaraSystem* MagicCircle);
 	ABaseMagic* SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass);
@@ -213,20 +213,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
 	FVector MagicBulletLocationOffset;
 
-	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
-	float MagicBulletRange = 2000.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Magic | Magic Bullet");
-	float MagicBulletDamage = 1.0f;
-
 	UPROPERTY(EditAnywhere, Category = "Magic | Flame Strike");
 	UNiagaraSystem* FlameStrikeCircle;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Flame Strike");
 	TSubclassOf<ABaseMagic> FlameStrikeClass;
-
-	UPROPERTY(EditAnywhere, Category = "Magic | Flame Strike");
-	float FlameStrikeDamage = 1;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Heal Over Time");
 	UNiagaraSystem* HealOverTimeCircle;
@@ -246,26 +237,17 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
 	TSubclassOf<ABaseMagic> PiercingClass;
 
-	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
-	float PiercingDamage = 1;
-
-	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
-	float PiercingRange = 1000.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Magic | Piercing");
-	float PiercingDelay = 0.01f;
-
 	UPROPERTY(EditAnywhere, Category = "Magic | Portal");
 	TSubclassOf<ABaseMagic> PortalClass;
-
-	UPROPERTY(EditAnywhere, Category = "Magic | Portal");
-	float PortalLifeTime = 10.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Explosion");
 	UNiagaraSystem* ExplosionCircle;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Explosion");
 	TSubclassOf<ABaseMagic> ExplosionClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Explosion");
+	float ExplosionBulletDamage = 1;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Tornado");
 	UNiagaraSystem* TornadoCircle;
@@ -284,7 +266,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Meteorite");
 	TSubclassOf<ABaseMagic> MeteoriteClass;
-
 
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	ECastedMagic CastedMagic = ECastedMagic::ECM_None;

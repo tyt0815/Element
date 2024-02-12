@@ -25,24 +25,29 @@ public:
 	FORCEINLINE float GetMaxMP() { return MaxMP; }
 	FORCEINLINE float GetHP() { return HP; }
 	FORCEINLINE float GetMP() { return MP; }
-	FORCEINLINE void SetMaxHP(float n) { MaxHP = n; }
-	FORCEINLINE void SetMaxMP(float n) { MaxMP = n; }
-	FORCEINLINE void SetHP(float n) {  HP = n; }
-	FORCEINLINE void SetMP(float n) {  MP = n; }
+	FORCEINLINE float GetATK() { return ATK; }
+	FORCEINLINE void SetMaxHP(float Value) { MaxHP = Value; }
+	FORCEINLINE void SetMaxMP(float Value) { MaxMP = Value; }
+	FORCEINLINE void SetHP(float Value) {  HP = Value; }
+	FORCEINLINE void SetMP(float Value) {  MP = Value; }
+	FORCEINLINE void SetATK(float Value) { ATK = Value; }
 	void ReceiveDamage(float Value);
 	void RecoveryHP(float Value);
 	void UseMP(float Value);
 	void RecoveryMP(float Value);
 private:
-	UPROPERTY(EditAnywhere, Category = Attribute)
+	UPROPERTY(EditAnywhere, Category = Attributes)
 	float MaxHP;
 
-	UPROPERTY(EditAnywhere, Category = Attribute)
+	UPROPERTY(EditAnywhere, Category = Attributes)
 	float MaxMP;
 
-	UPROPERTY(EditAnywhere, Category = Attribute)
+	UPROPERTY(EditAnywhere, Category = Attributes)
 	float HP;
 
-	UPROPERTY(EditAnywhere, Category = Attribute)
+	UPROPERTY(EditAnywhere, Category = Attributes)
 	float MP;
+
+	UPROPERTY(EditAnywhere, Category = Attributes)
+	float ATK;
 };

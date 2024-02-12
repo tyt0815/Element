@@ -16,9 +16,6 @@
 
 #include "Element/DebugMacro.h"
 #include "Magic/BaseAiming.h"
-#include "Magic/BaseMagic.h"
-#include "Magic/BaseMagicProjectile.h"
-#include "Magic/Piercing.h"
 #include "Magic/Portal.h"
 #include "HUDs/PlayerHUD.h"
 #include "HUDs/PlayerOverlay.h"
@@ -46,7 +43,7 @@ void ABasePlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	SwitchCameraLocation();
+	SwitchCameraLocation();	
 }
 
 void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -118,7 +115,7 @@ void ABasePlayer::InitMagicCircleDistVariationSpeed()
 
 void ABasePlayer::IncreaseMagicCircleDistVariationSpeed()
 {
-	MagicCircleDistVariationSpeed = FMath::Clamp(MagicCircleDistVariationSpeed * 1.1f, 0, 10.0f);
+	MagicCircleDistVariationSpeed = FMath::Clamp(MagicCircleDistVariationSpeed * 1.2f, 0, 50.0f);
 }
 
 void ABasePlayer::SetCurrMagicCircleDist(float Value)
@@ -175,12 +172,7 @@ void ABasePlayer::AttackOngoing(const FInputActionInstance& Instance)
 		{
 			FRotator SpawnRotator = GetCharacterFrontMagicCircleRotator();
 			SpawnMagicCircle(MagicCircleLocation, SpawnRotator, MagicBulletCircle);
-			ABaseMagicProjectile* MagicBullet = Cast<ABaseMagicProjectile>(SpawnMagicActor(MagicCircleLocation, SpawnRotator, MagicBulletClass));
-			if (MagicBullet)
-			{
-				MagicBullet->SetProjectileRange(MagicBulletRange);
-				MagicBullet->SetDamage(MagicBulletDamage);
-			}
+			SpawnMagicActor(MagicCircleLocation, SpawnRotator, MagicBulletClass);
 			GetWorldTimerManager().SetTimer(MagicBulletTimer, MagicBulletCoolTime, false);
 		}
 	}
@@ -588,7 +580,9 @@ FRotator ABasePlayer::GetFloorMagicCircleRotator()
 
 FRotator ABasePlayer::GetFlyMagicCircleRotator()
 {
-	return ViewCamera->GetComponentRotation();
+	FRotator Rotator = ViewCamera->GetComponentRotation();
+	Rotator.Pitch = 0;
+	return Rotator;
 }
 
 void ABasePlayer::InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth)
@@ -653,22 +647,14 @@ void ABasePlayer::UseSelectedElements()
 
 void ABasePlayer::MagicII_FlameStrike()
 {
-	FVector CircleLocation;
-	if (LocateFloorMagicCircle(FVector::ZeroVector, CircleLocation))
-	{
-		SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, FlameStrikeCircle);
-		ABaseMagic* FlameStrike = SpawnMagicActor(CircleLocation, FRotator::ZeroRotator, FlameStrikeClass);
-		if (FlameStrike)
-		{
-			FlameStrike->SetDamage(FlameStrikeDamage);
-		}
-	}
+	UseFloorMagic(FlameStrikeCircle, FlameStrikeClass);
 }
 
 void ABasePlayer::MagicAA_HealOverTime()
 {
 	FVector CircleLocation = GetUnderCharacterFeetLocation();
-	SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, HealOverTimeCircle);
+	UNiagaraComponent* SpawnedMagicCircle = SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, HealOverTimeCircle);
+	
 	HealOverTimeCharacter(AmountOfHealPerTime, HealCount, HealDelay);
 }
 
@@ -679,13 +665,7 @@ void ABasePlayer::MagicVV_Piercing()
 	{
 		FRotator CircleRotator = GetCharacterFrontMagicCircleRotator();
 		SpawnMagicCircle(CircleLocation, CircleRotator, PiercingCircle);
-		APiercing* Piercing = Cast<APiercing>(SpawnMagicActor(CircleLocation, CircleRotator, PiercingClass));
-		if (Piercing)
-		{
-			Piercing->SetDamage(PiercingDamage);
-			Piercing->SetProjectileRange(PiercingRange);
-			Piercing->SetPiercingDelay(PiercingDelay);
-		}
+		SpawnMagicActor(CircleLocation, CircleRotator, PiercingClass);
 	}
 }
 
@@ -695,24 +675,37 @@ void ABasePlayer::MagicTT_Portal()
 	if (LocateFlyMagicCircle(FVector::XAxisVector * CurrMagicCircleDist, MagicLocation))
 	{
 		FRotator MagicRotator = GetFlyMagicCircleRotator();
-		MagicRotator.Pitch = 0;
-		APortal* Portal1 = Cast<APortal>(SpawnMagicActor(MagicLocation, MagicRotator, PortalClass));
+		APortal* Portal1 = Cast<APortal>(SpawnMagicActor(GetUnderCharacterFeetLocation(), MagicRotator, PortalClass));
 		APortal* Portal2 = Cast<APortal>(SpawnMagicActor(MagicLocation, MagicRotator, PortalClass));
 		Portal1->SetOutPortal(Portal2);
-		Portal1->SetPortalLifeTime(PortalLifeTime);
 		Portal2->SetOutPortal(Portal1);
-		Portal2->SetPortalLifeTime(PortalLifeTime);
-
-		Portal1->SetActorLocation(GetActorLocation() - FVector::ZAxisVector * GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 	}
 }
 
 void ABasePlayer::MagicIV_Explosion()
 {
+	FVector CircleLocation;
+	if (LocateCharacterFrontMagicCircle(FVector::ZeroVector, CircleLocation))
+	{
+		FRotator CircleRotator = GetCharacterFrontMagicCircleRotator();
+		SpawnMagicCircle(CircleLocation, CircleRotator, ExplosionCircle);
+		SpawnMagicActor(CircleLocation, CircleRotator, ExplosionClass);
+	}
 }
 
 void ABasePlayer::MagicVA_Tornado()
 {
+	UseFloorMagic(TornadoCircle, TornadoClass);
+}
+
+void ABasePlayer::UseFloorMagic(UNiagaraSystem* MagicCircle, TSubclassOf<ABaseMagic> MagicClass)
+{
+	FVector CircleLocation;
+	if (LocateFloorMagicCircle(FVector::ZeroVector, CircleLocation))
+	{
+		SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, MagicCircle);
+		SpawnMagicActor(CircleLocation, FRotator::ZeroRotator, MagicClass);
+	}
 }
 
 void ABasePlayer::MagicAT_Summon()
@@ -729,8 +722,8 @@ void ABasePlayer::CastEnd()
 	CastedMagic = ECastedMagic::ECM_None;
 	CameraState = EPlayerCameraState::EPCS_ZoomOut;
 	UseSelectedElements();
-	FloorAimingActor->SetAimingMeshVisibility(false);
-	FlyAimingActor->SetAimingMeshVisibility(false);
+	FloorAimingActor->SetActorHiddenInGame(true);
+	FlyAimingActor->SetActorHiddenInGame(true);
 }
 
 void ABasePlayer::UpdateElementSlotUI()
@@ -751,7 +744,7 @@ ABaseAiming* ABasePlayer::SpawnAimingActor(TSubclassOf<ABaseAiming> AimingClass)
 		ABaseAiming* AimingActor = World->SpawnActor<ABaseAiming>(AimingClass, FVector::ZeroVector, FRotator::ZeroRotator);
 		AimingActor->SetOwner(this);
 		AimingActor->SetInstigator(this);
-		AimingActor->SetAimingMeshVisibility(false);
+		AimingActor->SetActorHiddenInGame(true);
 		return AimingActor;
 	}
 	return nullptr;
@@ -788,11 +781,11 @@ void ABasePlayer::ShowFloorAimingCircle()
 	if (LocateFloorMagicCircle(FVector::ZeroVector, AimingLocation))
 	{
 		FloorAimingActor->SetActorLocation(AimingLocation);
-		FloorAimingActor->SetAimingMeshVisibility(true);
+		FloorAimingActor->SetActorHiddenInGame(false);
 	}
 	else
 	{
-		FloorAimingActor->SetAimingMeshVisibility(false);
+		FloorAimingActor->SetActorHiddenInGame(true);
 	}
 }
 
@@ -804,11 +797,11 @@ void ABasePlayer::ShowFlyAimingCircle()
 	{
 		FlyAimingActor->SetActorLocation(AimingLocation);
 		FlyAimingActor->SetActorRotation(GetFlyMagicCircleRotator());
-		FlyAimingActor->SetAimingMeshVisibility(true);
+		FlyAimingActor->SetActorHiddenInGame(false);
 	}
 	else
 	{
-		FlyAimingActor->SetAimingMeshVisibility(false);
+		FlyAimingActor->SetActorHiddenInGame(true);
 	}
 }
 
