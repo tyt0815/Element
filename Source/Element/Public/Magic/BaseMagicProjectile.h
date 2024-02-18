@@ -14,6 +14,9 @@ public:
 	ABaseMagicProjectile();
 	virtual void Tick(float DeltaTime) override;
 
+	bool IsOverRange();
+	double GetMovingDistance();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -26,7 +29,7 @@ protected:
 	UPROPERTY(VisibleAnywhere);
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
-private:
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float ProjectileRange = 100000.0f;
+private:
 };

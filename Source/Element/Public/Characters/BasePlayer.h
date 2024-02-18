@@ -172,7 +172,7 @@ public:
 	void MagicTI_Meteorite();
 	void CastEnd();
 	void UpdateElementSlotUI();
-	void UseFloorMagic(UNiagaraSystem* MagicCircle, TSubclassOf<ABaseMagic> MagicClass);
+	ABaseMagic* UseFloorMagic(UNiagaraSystem* MagicCircle, TSubclassOf<ABaseMagic> MagicClass);
 	ABaseAiming* SpawnAimingActor(TSubclassOf<ABaseAiming> AimingClass);
 	UNiagaraComponent* SpawnMagicCircle(FVector Location, FRotator Rotator, UNiagaraSystem* MagicCircle);
 	ABaseMagic* SpawnMagicActor(FVector Location, FRotator Rotator, TSubclassOf<ABaseMagic> MagicClass);
@@ -261,11 +261,20 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Magic | Summon");
 	TSubclassOf<ABaseMagic> SummonClass;
 
+	UPROPERTY(EditAnywhere, Category = "Magic | Summon")
+	FVector SummonLocationCenter = FVector(-100, 0, 0);
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Summon")
+	float SummonLocationRadius = 30.0f;
+
 	UPROPERTY(EditAnywhere, Category = "Magic | Meteorite");
 	UNiagaraSystem* MeteoriteCircle;
 
 	UPROPERTY(EditAnywhere, Category = "Magic | Meteorite");
 	TSubclassOf<ABaseMagic> MeteoriteClass;
+
+	UPROPERTY(EditAnywhere, Category = "Magic | Meteorite");
+	FVector MeteoriteSpawnOffset = {0.0f, 0.0f, 1000.0f};
 
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	ECastedMagic CastedMagic = ECastedMagic::ECM_None;

@@ -22,6 +22,7 @@ void ATornado::Tick(float DeltaTime)
 				UCharacterMovementComponent* MovementComponent = Character->GetCharacterMovement();
 				if (MovementComponent)
 				{
+					MovementComponent->SetMovementMode(EMovementMode::MOVE_Flying);
 					if (!IsTopLocation(Character))
 					{
 						MovementComponent->AddInputVector(FVector::ZAxisVector);
@@ -58,7 +59,7 @@ void ATornado::BeginPlay()
 {
 	Super::BeginPlay();
 
-	EndMagicAfter(LifeTime);
+	SetLifeSpan(LifeTime);
 	TopLocation = GetActorLocation() + BoxTraceHalfSize.Z * 2;
 	FTimerHandle DOTTimer;
 	SetMultiStageHit(GetOwnerATK() * DamageCoefficient, MSHDelay);

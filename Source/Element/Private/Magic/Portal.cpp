@@ -29,7 +29,7 @@ void APortal::BeginPlay()
 {
 	Super::BeginPlay();
 
-	EndMagicAfter(PortalLifeTime);
+	SetLifeSpan(PortalLifeTime);
 }
 
 void APortal::SetOutPortal(APortal* Portal)

@@ -27,7 +27,7 @@ GEngine->AddOnScreenDebugMessage(Key, 5, LogColor, DebugMessage);}
 	DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, true, -1.f, 0, 1.f);\
 	DrawDebugPoint(GetWorld(), EndLocation, 15.f, FColor::Green, true);\
 }
-#define DRAW_VECTOR_SingleFrame(StartLocation, EndLocation) if (GetWorld())\
+#define DRAW_VECTOR_SINGLE_FRAME(StartLocation, EndLocation) if (GetWorld())\
 {\
 	DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, -1.f, 0, 1.f);\
 	DrawDebugPoint(GetWorld(), EndLocation, 15.f, FColor::Green, false, -1.f);\

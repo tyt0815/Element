@@ -5,8 +5,8 @@
 #include "NiagaraComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Camera/CameraShakeSourceActor.h"
 
-#include "Element/DebugMacro.h"
 #include "Interfaces/HitInterface.h"
 #include "Characters/BaseCharacter.h"
 
@@ -15,8 +15,8 @@ ABaseMagic::ABaseMagic()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Components
-	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	SetRootComponent(Root);
+	RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	SetRootComponent(RootSceneComponent);
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	StaticMeshComponent->SetupAttachment(GetRootComponent());
 	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -24,6 +24,7 @@ ABaseMagic::ABaseMagic()
 	HitBoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("HitBox"));
 	HitBoxComponent->SetupAttachment(GetRootComponent());
 	HitBoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	HitBoxComponent->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel2);
 	HitBoxComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Overlap);
 	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
@@ -56,7 +57,6 @@ void ABaseMagic::BeginPlay()
 	BoxTraceStart->SetRelativeLocation(HitBoxComponent->GetRelativeLocation() + FVector(-HitBoxComponent->GetScaledBoxExtent().X, 0.0f, 0.0f));
 	BoxTraceEnd->SetRelativeLocation(HitBoxComponent->GetRelativeLocation() + FVector(HitBoxComponent->GetScaledBoxExtent().X, 0.0f, 0.0f));
 	BoxTraceHalfSize = FVector(0.0f, HitBoxComponent->GetScaledBoxExtent().Y, HitBoxComponent->GetScaledBoxExtent().Z);
-	BoxTraceOrientation = GetActorRotation();
 
 	HitBoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ABaseMagic::BeginBoxOverlap);
 	HitBoxComponent->OnComponentEndOverlap.AddDynamic(this, &ABaseMagic::EndBoxOverlap);
@@ -76,6 +76,16 @@ void ABaseMagic::InitActorsToIgnore()
 float ABaseMagic::GetOwnerATK()
 {
 	return Owner ? Owner->GetATK() : 0;
+}
+
+FVector ABaseMagic::GetOwnerLocation()
+{
+	return Owner ? Owner->GetActorLocation() : FVector();
+}
+
+FRotator ABaseMagic::GetOwnerRotation()
+{
+	return Owner ? Owner->GetActorRotation() : FRotator();
 }
 
 void ABaseMagic::AddActorsToIgnore(AActor* Actor)
@@ -103,11 +113,11 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult)
 		Start,
 		End,
 		BoxTraceHalfSize,
-		BoxTraceOrientation,
+		GetActorRotation(),
 		BoxTraceObjectTypes,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::None,
+		EDrawDebugTrace::ForOneFrame,
 		HitResult,
 		true
 	);
@@ -126,7 +136,7 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore)
 		Start,
 		End,
 		BoxTraceHalfSize,
-		BoxTraceOrientation,
+		GetActorRotation(),
 		BoxTraceObjectTypes,
 		false,
 		Ignore,
@@ -168,12 +178,6 @@ void ABaseMagic::DamageActor(FHitResult& HitResult, float Damage)
 			UDamageType::StaticClass()
 		);
 	}
-}
-
-void ABaseMagic::EndMagicAfter(float Time)
-{
-	GetWorldTimerManager().ClearTimer(DestroyTimer);
-	GetWorldTimerManager().SetTimer(DestroyTimer, this, &ABaseMagic::EndMagic, Time);
 }
 
 void ABaseMagic::SetMultiStageHit(float Damage, float Delay)

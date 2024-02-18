@@ -17,6 +17,8 @@
 #include "Element/DebugMacro.h"
 #include "Magic/BaseAiming.h"
 #include "Magic/Portal.h"
+#include "Magic/Meteorite.h"
+#include "Magic/Summon.h"
 #include "HUDs/PlayerHUD.h"
 #include "HUDs/PlayerOverlay.h"
 
@@ -479,7 +481,7 @@ bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 		ObjectTypes,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForOneFrame,
+		EDrawDebugTrace::None,
 		HitResult,
 		true
 	);
@@ -698,22 +700,46 @@ void ABasePlayer::MagicVA_Tornado()
 	UseFloorMagic(TornadoCircle, TornadoClass);
 }
 
-void ABasePlayer::UseFloorMagic(UNiagaraSystem* MagicCircle, TSubclassOf<ABaseMagic> MagicClass)
+ABaseMagic* ABasePlayer::UseFloorMagic(UNiagaraSystem* MagicCircle, TSubclassOf<ABaseMagic> MagicClass)
 {
 	FVector CircleLocation;
 	if (LocateFloorMagicCircle(FVector::ZeroVector, CircleLocation))
 	{
 		SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, MagicCircle);
-		SpawnMagicActor(CircleLocation, FRotator::ZeroRotator, MagicClass);
+		return SpawnMagicActor(CircleLocation, FRotator::ZeroRotator, MagicClass);
 	}
+	return nullptr;
 }
 
 void ABasePlayer::MagicAT_Summon()
 {
+	FVector CircleLocation;
+	if (LocateCharacterFrontMagicCircle(FVector::ZeroVector, CircleLocation))
+	{
+		FRotator CircleRotator = GetCharacterFrontMagicCircleRotator();
+		SpawnMagicCircle(CircleLocation, CircleRotator, SummonCircle);
+		ASummon* Servant = Cast<ASummon>(SpawnMagicActor(CircleLocation, CircleRotator, SummonClass));
+		FVector SummonLocation = SummonLocationCenter;
+		FVector Offset;
+		Offset.X = FMath::Rand();
+		Offset.Y = FMath::Rand();
+		Offset.Z = FMath::Rand();
+		Offset.Normalize();
+		SummonLocation += Offset * FMath::RandRange(0.0f, SummonLocationRadius);
+		Servant->SetLocationRelatedWithOwner(SummonLocation);
+	}
 }
 
 void ABasePlayer::MagicTI_Meteorite()
 {
+	FVector TargetLocation;
+	if (LocateFloorMagicCircle(FVector::ZeroVector, TargetLocation))
+	{
+		FVector CircleLocation = TargetLocation + MeteoriteSpawnOffset;
+		SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, MeteoriteCircle);
+		AMeteorite* Meteo = Cast<AMeteorite>(SpawnMagicActor(CircleLocation, FRotator::ZeroRotator, MeteoriteClass));
+		Meteo->SetProjectileRange(MeteoriteSpawnOffset.Length());
+	}
 }
 
 void ABasePlayer::CastEnd()
@@ -741,9 +767,9 @@ ABaseAiming* ABasePlayer::SpawnAimingActor(TSubclassOf<ABaseAiming> AimingClass)
 	UWorld* World = GetWorld();
 	if (World && AimingClass)
 	{
-		ABaseAiming* AimingActor = World->SpawnActor<ABaseAiming>(AimingClass, FVector::ZeroVector, FRotator::ZeroRotator);
-		AimingActor->SetOwner(this);
-		AimingActor->SetInstigator(this);
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		ABaseAiming* AimingActor = World->SpawnActor<ABaseAiming>(AimingClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
 		AimingActor->SetActorHiddenInGame(true);
 		return AimingActor;
 	}

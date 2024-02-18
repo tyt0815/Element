@@ -2,8 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Element/DebugMacro.h"
 #include "BaseMagic.generated.h"
 
+class ABaseCharacter;
 class UBoxComponent;
 class UArrowComponent;
 class USceneComponent;
@@ -27,25 +29,28 @@ protected:
 	* Magic Basic
 	*/
 public:
+	FORCEINLINE UBoxComponent* GetHitBoxComponent() const { return HitBoxComponent; }
 	virtual void InitActorsToIgnore();
 	virtual void InitBoxTraceObjectTypes();
 protected:
 	FORCEINLINE float GetOwnerATK();
+	FORCEINLINE FVector GetOwnerLocation();
+	FORCEINLINE FRotator GetOwnerRotation();
 	void AddActorsToIgnore(AActor* Actor);
 	void RemoveActorsToIgnore(AActor* Actor);
 	void BoxTrace(FHitResult& HitResult);
 	void BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore);
 	void DamageActor(FHitResult& HitResult, float Damage);
-	void EndMagicAfter(float Time);
 	virtual void BeginBoxOverlapExec(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {}
 	virtual void SetMultiStageHit(float Damage, float Delay);
+
 
 	UFUNCTION()
 	virtual void MultiStageHit(float Damage);
 
 	UFUNCTION()
-	void EndMagic();
+	virtual void EndMagic();
 
 	UFUNCTION()
 	virtual void BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -55,7 +60,7 @@ protected:
 	virtual void EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UPROPERTY(VisibleAnywhere)
-	USceneComponent* Root;
+	USceneComponent* RootSceneComponent;
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* StaticMeshComponent;
@@ -75,13 +80,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float DamageCoefficient = 1;
 
+	UPROPERTY(EditAnywhere, Category = Attribute)
+	float RepulsiveForce = 1000.0f;
+
 	FVector BoxTraceHalfSize;
-	FRotator BoxTraceOrientation;
 	TArray<AActor*> ActorsToIgnore;
 	FVector SpawnedLocation;
 	TArray<TEnumAsByte<EObjectTypeQuery>> BoxTraceObjectTypes;
-	FTimerHandle DestroyTimer;
 	FTimerHandle MultiStageHitTimer;
 
-	class ABaseCharacter* Owner;
+	ABaseCharacter* Owner;
 };

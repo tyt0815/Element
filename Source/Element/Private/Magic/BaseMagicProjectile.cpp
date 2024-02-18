@@ -16,10 +16,20 @@ void ABaseMagicProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if ((SpawnedLocation - GetActorLocation()).Size() > ProjectileRange)
+	if (IsOverRange())
 	{
-		Destroy();
+		EndMagic();
 	}
+}
+
+bool ABaseMagicProjectile::IsOverRange()
+{
+	return GetMovingDistance() > ProjectileRange;
+}
+
+double ABaseMagicProjectile::GetMovingDistance()
+{
+	return (SpawnedLocation - GetActorLocation()).Size();
 }
 
 void ABaseMagicProjectile::BeginPlay()
