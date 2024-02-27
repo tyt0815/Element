@@ -44,4 +44,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	UAttributeComponent* Attributes;
+
+	/*
+	* Math
+	*/
+protected:
+	double GetAngleBetweenTwoVectors(FVector A, FVector B);
 };

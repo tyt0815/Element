@@ -41,8 +41,6 @@ protected:
 	void BoxTrace(FHitResult& HitResult);
 	void BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore);
 	void DamageActor(FHitResult& HitResult, float Damage);
-	virtual void BeginBoxOverlapExec(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {}
 	virtual void SetMultiStageHit(float Damage, float Delay);
 
 
@@ -54,7 +52,7 @@ protected:
 
 	UFUNCTION()
 	virtual void BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {}
 
 	UFUNCTION()
 	virtual void EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);

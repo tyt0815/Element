@@ -21,6 +21,7 @@
 #include "Magic/Summon.h"
 #include "HUDs/PlayerHUD.h"
 #include "HUDs/PlayerOverlay.h"
+#include "Interfaces/InteractionInterface.h"
 
 ABasePlayer::ABasePlayer() : ABaseCharacter()
 {
@@ -45,7 +46,10 @@ void ABasePlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	SwitchCameraLocation();	
+	SwitchCameraLocation();
+
+	//SCREEN_LOG(4, FString::SanitizeFloat(FMath::RadiansToDegrees(GetAngleBetweenTwoVectors(ViewCamera->GetForwardVector(), FVector::XAxisVector))));
+	
 }
 
 void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -58,6 +62,7 @@ void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABasePlayer::Look);
 		Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		Input->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		Input->BindAction(InteractionAction, ETriggerEvent::Triggered, this, &ABasePlayer::InteractionTriggered);
 
 		Input->BindAction(AttackAction, ETriggerEvent::Started, this, &ABasePlayer::AttackStarted);
 		Input->BindAction(AttackAction, ETriggerEvent::Ongoing, this, &ABasePlayer::AttackOngoing);
@@ -358,6 +363,26 @@ void ABasePlayer::SubSkill2Ongoing(const FInputActionInstance& Instance)
 
 void ABasePlayer::SubSkill2Triggered(const FInputActionInstance& Instance)
 {
+}
+
+void ABasePlayer::InteractionTriggered(const FInputActionInstance& Instance)
+{
+	AActor* InteractionTarget = nullptr;
+	double TargetAngle = 180;
+	FVector AnglePoint = ViewCamera->GetComponentLocation();
+	for (const auto Comparison : InteractionTargets)
+	{
+		double ComparisonAngle = FMath::RadiansToDegrees(GetAngleBetweenTwoVectors(ViewCamera->GetForwardVector(), Comparison->GetActorLocation() - AnglePoint));
+		if (IInteractionInterface::Execute_IsInteractable(Comparison) && ComparisonAngle < TargetAngle)
+		{
+			InteractionTarget = Comparison;
+			TargetAngle = ComparisonAngle;
+		}
+	}
+	if (InteractionTarget)
+	{
+		IInteractionInterface::Execute_Interact(InteractionTarget);
+	}
 }
 
 FVector ABasePlayer::GetCameraLookAtLocation()

@@ -6,16 +6,15 @@
 #include "Magic/BaseMagicProjectile.h"
 #include "Explosion.generated.h"
 
-/**
- * 
- */
+class UNiagaraSystem;
+
 UCLASS()
 class ELEMENT_API AExplosion : public ABaseMagicProjectile
 {
 	GENERATED_BODY()
 
 public:
-	virtual void BeginBoxOverlapExec(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	virtual void BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	
 private:
@@ -29,4 +28,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float ExplosionDelay = 0.1f;
+
+	UPROPERTY(EditAnywhere, Category = Attribute)
+	UNiagaraSystem* ExplosionNiagara;
 };

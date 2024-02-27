@@ -30,6 +30,7 @@ ABaseMagic::ABaseMagic()
 	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
 	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Vehicle, ECollisionResponse::ECR_Overlap);
+	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 	ArrowComponent->SetupAttachment(GetRootComponent());
 	BoxTraceStart = CreateDefaultSubobject<USceneComponent>(TEXT("BoxTraceStart"));
@@ -148,13 +149,6 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore)
 	{
 		Ignore.Add(HitResult.GetActor());
 	}
-}
-
-void ABaseMagic::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (OtherActor->ActorHasTag(TEXT("Magic"))) return;
-	BeginBoxOverlapExec(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 }
 
 void ABaseMagic::EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)

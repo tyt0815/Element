@@ -90,3 +90,10 @@ void ABaseCharacter::HealOverTimeCharacter(float Value, int Count, float Delay)
 	HOTDelegate.BindUFunction(this, FName("HealOverTimeCharacter"), Value, Count - 1, Delay);
 	GetWorldTimerManager().SetTimer(HealHandler, HOTDelegate, Delay, false);
 }
+
+double ABaseCharacter::GetAngleBetweenTwoVectors(FVector A, FVector B)
+{
+	A.Normalize();
+	B.Normalize();
+	return FMath::Acos(A.Dot(B));
+}

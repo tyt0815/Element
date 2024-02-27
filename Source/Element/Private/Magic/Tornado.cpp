@@ -42,7 +42,7 @@ bool ATornado::IsTopLocation(AActor* Actor)
 	return Actor->GetActorLocation().Z >= TopLocation.Z - TopOffset;
 }
 
-void ATornado::BeginBoxOverlapExec(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ATornado::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	ACharacter* Character = Cast<ACharacter>(OtherActor);
 	if (Character)

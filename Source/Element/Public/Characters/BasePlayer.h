@@ -13,6 +13,7 @@ class UNiagaraComponent;
 class UPlayerOverlay;
 class ABaseMagic;
 class ABaseAiming;
+class IInteractionInterface;
 
 struct FInputActionInstance;
 
@@ -36,6 +37,9 @@ public:
 	void InitMagicCircleDistVariationSpeed();
 	void IncreaseMagicCircleDistVariationSpeed();
 	void SetCurrMagicCircleDist(float Value);
+	FORCEINLINE void AddInteractionTarget(AActor* InteractiveActor) { InteractionTargets.Add(InteractiveActor); }
+	FORCEINLINE void RemoveInteractionTarget(AActor* InteractiveActor) { InteractionTargets.Remove(InteractiveActor); }
+
 private:	
 	void Move(const FInputActionInstance& Instance);
 	void Look(const FInputActionInstance& Instance);
@@ -56,6 +60,7 @@ private:
 	void SubSkill2Started(const FInputActionInstance& Instance);
 	void SubSkill2Ongoing(const FInputActionInstance& Instance);
 	void SubSkill2Triggered(const FInputActionInstance& Instance);
+	void InteractionTriggered(const FInputActionInstance& Instance);
 
 	UPROPERTY(EditAnywhere, Category = "Input | InputMappingContext");
 	UInputMappingContext* KBMMappingContext = nullptr;
@@ -68,6 +73,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* JumpAction = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
+	UInputAction* InteractionAction = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* AttackAction = nullptr;
@@ -96,13 +104,14 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | InputAction");
 	UInputAction* SubSkill2Action = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "Locomotion");
+	UPROPERTY(EditAnywhere, Category = Actions);
 	float WalkSpeed;
 	
-	UPROPERTY(EditAnywhere, Category = "Locomotion");
+	UPROPERTY(EditAnywhere, Category = Actions);
 	float RunSpeed;
 
 	float MagicCircleDistVariationSpeed;
+	TSet<AActor*> InteractionTargets;
 
 	/*
 	* Ä«¸Þ¶ó
