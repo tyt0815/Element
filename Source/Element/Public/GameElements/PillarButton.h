@@ -20,10 +20,10 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-protected:
+public:
+	virtual void Trigger_Implementation(AActor* TriggeringgActor) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* PillarMesh;
+protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* ButtonMesh;

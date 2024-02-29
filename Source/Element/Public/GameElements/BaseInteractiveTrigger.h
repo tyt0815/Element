@@ -17,12 +17,11 @@ protected:
 	virtual void BeginPlay() override;
 	
 public:
-	virtual void Interact_Implementation() override;
-	virtual void Trigger_Implementation() override;
+	virtual void Interact_Implementation(AActor* InteractingActor) override;
+	virtual void Trigger_Implementation(AActor* TriggeringgActor) override;
 
 protected:
-	virtual void ActivateInteraction() override;
-	virtual void DeactivateInteraction() override;
+	//virtual void SetTriggerTargets() override {};
 
 	UPROPERTY(EditInstanceOnly)
 	TArray<AActor*> TriggerTargets;

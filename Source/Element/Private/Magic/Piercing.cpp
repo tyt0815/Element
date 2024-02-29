@@ -6,5 +6,5 @@ void APiercing::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetMultiStageHit(GetOwnerATK() * DamageCoefficient, PiercingDelay);
+	SetMultiStageHit(GetOwnerATK() * DamageCoefficient, PiercingDelay, EFourElement::EPE_Ventus);
 }

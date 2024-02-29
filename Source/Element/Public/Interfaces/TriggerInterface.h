@@ -18,16 +18,25 @@ class ELEMENT_API ITriggerInterface
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)
-	void Trigger();
+	//ITriggerInterface();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)
-	void Halt();
+	void Trigger(AActor* TriggeringActor);
+	//virtual void Trigger_Implementation(AActor* TriggeringActor);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)
+	void Halt(AActor* HaltingActor);
+	//virtual void Halt_Implementation(AActor* HaltingActor);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)
 	bool IsTriggered() const;
 	bool IsTriggered_Implementation() const { return Triggered; }
 	
 protected:
+	//void SignalToTargets();
+	//void InitTriggerTargets();
+	//virtual void SetTriggerTargets() = 0;
+
 	bool Triggered;
+	//TArray<AActor*> TriggerTargets;
 };

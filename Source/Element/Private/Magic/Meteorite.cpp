@@ -35,31 +35,7 @@ void AMeteorite::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetMultiStageHit(GetOwnerATK() * DamageCoefficient, MSHDelay);
-}
-
-void AMeteorite::MultiStageHit(float Damage)
-{
-	InitActorsToIgnore();
-	while (true)
-	{
-		FHitResult HitResult;
-		UKismetSystemLibrary::SphereTraceSingleForObjects(
-			this,
-			GetActorLocation(),
-			GetActorLocation(),
-			SphereCollision->GetScaledSphereRadius(),
-			BoxTraceObjectTypes,
-			false,
-			ActorsToIgnore,
-			EDrawDebugTrace::None,
-			HitResult,
-			true
-		);
-		if (HitResult.GetActor() == nullptr) break;
-		ActorsToIgnore.Add(HitResult.GetActor());
-		DamageActor(HitResult, Damage);
-	}
+	SetMultiStageHit(GetOwnerATK() * DamageCoefficient, MSHDelay, EFourElement::EPE_Terra);
 }
 
 void AMeteorite::EndMagic()
@@ -83,7 +59,7 @@ void AMeteorite::EndMagic()
 		);
 		if (HitResult.GetActor() == nullptr) break;
 		ActorsToIgnore.Add(HitResult.GetActor());
-		DamageActor(HitResult, GetOwnerATK() * ExplosionCoefficient);
+		DamageActor(HitResult, GetOwnerATK() * ExplosionCoefficient, EFourElement::EPE_Ignis);
 	}
 	Destroy();
 }

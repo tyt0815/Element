@@ -20,7 +20,13 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+public:
+	FORCEINLINE float GetInteractRangeRadius();
+
 protected:
+	void BeTargetedToOverlappingActors();
+	void BeUntargetedFromActor(AActor* OtherActor);
+	bool IsOutOfTheRangeOfInteraction(AActor* TargetActor);
 
 	UFUNCTION(BlueprintCallable, Category = Interaction)
 	virtual void ActivateInteraction();
@@ -38,7 +44,10 @@ protected:
 	void EndOverlapInteractRangeComponent(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	virtual void EndOverlapInteractRangeComponent_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* BaseMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USphereComponent* InteractRangeComponent;
 
 	UPROPERTY(VisibleAnywhere)

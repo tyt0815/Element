@@ -62,7 +62,7 @@ void ATornado::BeginPlay()
 	SetLifeSpan(LifeTime);
 	TopLocation = GetActorLocation() + BoxTraceHalfSize.Z * 2;
 	FTimerHandle DOTTimer;
-	SetMultiStageHit(GetOwnerATK() * DamageCoefficient, MSHDelay);
+	SetMultiStageHit(GetOwnerATK() * DamageCoefficient, MSHDelay, EFourElement::EPE_Aqua);
 }
 
 void ATornado::EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)

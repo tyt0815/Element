@@ -11,5 +11,5 @@ void AFlameStrike::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 {
 	FHitResult HitResult;
 	BoxTrace(HitResult);
-	DamageActor(HitResult, GetOwnerATK() * DamageCoefficient);
+	DamageActor(HitResult, GetOwnerATK() * DamageCoefficient, EFourElement::EPE_Ignis);
 }

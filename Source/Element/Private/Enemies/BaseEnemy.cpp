@@ -22,7 +22,3 @@ float ABaseEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	return DamageAmount;
 }
-
-void ABaseEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
-{
-}

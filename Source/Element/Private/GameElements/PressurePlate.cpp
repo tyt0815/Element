@@ -34,7 +34,7 @@ void APressurePlate::BeginPlay()
 	PressureOverlap->OnComponentEndOverlap.AddDynamic(this, &APressurePlate::EndPressureOverlap);
 }
 
-void APressurePlate::Trigger_Implementation()
+void APressurePlate::Trigger_Implementation(AActor* TriggeringActor)
 {
 	Triggered = true;
 	for (auto TriggerTarget : TriggerTargets)
@@ -43,7 +43,7 @@ void APressurePlate::Trigger_Implementation()
 	}
 }
 
-void APressurePlate::Halt_Implementation()
+void APressurePlate::Halt_Implementation(AActor* HaltingActor)
 {
 	Triggered = false;
 }
@@ -54,7 +54,7 @@ void APressurePlate::BeginPressureOverlap_Implementation(UPrimitiveComponent* Ov
 	PressureOverlap->GetOverlappingActors(OverlappingActors);
 	if (!ITriggerInterface::Execute_IsTriggered(this) && OverlappingActors.Num() > 0)
 	{
-		ITriggerInterface::Execute_Trigger(this);
+		ITriggerInterface::Execute_Trigger(this, this);
 	}
 }
 
@@ -64,7 +64,7 @@ void APressurePlate::EndPressureOverlap_Implementation(UPrimitiveComponent* Over
 	PressureOverlap->GetOverlappingActors(OverlappingActors);
 	if (ITriggerInterface::Execute_IsTriggered(this) && OverlappingActors.Num() == 0)
 	{
-		ITriggerInterface::Execute_Halt(this);
+		ITriggerInterface::Execute_Halt(this, this);
 	}
 }
 

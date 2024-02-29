@@ -23,7 +23,7 @@ class ELEMENT_API IInteractionInterface
 	
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Interaction)
-	void Interact();
+	void Interact(AActor* InteractingActor);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Interaction)
 	bool IsInteractable() const;

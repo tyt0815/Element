@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "Characters/CharacterTypes.h"
 #include "HitInterface.generated.h"
 
 
@@ -21,5 +22,5 @@ class ELEMENT_API IHitInterface
 	
 public:
 	UFUNCTION(BlueprintNativeEvent)
-	void GetHit(const FVector& ImpactPoint, AActor* Hitter);
+	void GetHit(const FVector& ImpactPoint, AActor* Hitter, enum EFourElement Element);
 };

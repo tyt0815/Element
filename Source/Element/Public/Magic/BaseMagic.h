@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Element/DebugMacro.h"
+#include "Characters/CharacterTypes.h"
 #include "BaseMagic.generated.h"
 
 class ABaseCharacter;
@@ -40,12 +41,12 @@ protected:
 	void RemoveActorsToIgnore(AActor* Actor);
 	void BoxTrace(FHitResult& HitResult);
 	void BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore);
-	void DamageActor(FHitResult& HitResult, float Damage);
-	virtual void SetMultiStageHit(float Damage, float Delay);
+	void DamageActor(FHitResult& HitResult, float Damage, EFourElement Element);
+	virtual void SetMultiStageHit(float Damage, float Delay, EFourElement Element);
 
 
 	UFUNCTION()
-	virtual void MultiStageHit(float Damage);
+	virtual void MultiStageHit(float Damage, EFourElement Element);
 
 	UFUNCTION()
 	virtual void EndMagic();

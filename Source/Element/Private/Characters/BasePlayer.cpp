@@ -22,6 +22,7 @@
 #include "HUDs/PlayerHUD.h"
 #include "HUDs/PlayerOverlay.h"
 #include "Interfaces/InteractionInterface.h"
+#include "Helper/MathHelper.h"
 
 ABasePlayer::ABasePlayer() : ABaseCharacter()
 {
@@ -367,27 +368,46 @@ void ABasePlayer::SubSkill2Triggered(const FInputActionInstance& Instance)
 
 void ABasePlayer::InteractionTriggered(const FInputActionInstance& Instance)
 {
-	AActor* InteractionTarget = nullptr;
-	double TargetAngle = 180;
-	FVector AnglePoint = ViewCamera->GetComponentLocation();
-	for (const auto Comparison : InteractionTargets)
+	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied)
 	{
-		double ComparisonAngle = FMath::RadiansToDegrees(GetAngleBetweenTwoVectors(ViewCamera->GetForwardVector(), Comparison->GetActorLocation() - AnglePoint));
-		if (IInteractionInterface::Execute_IsInteractable(Comparison) && ComparisonAngle < TargetAngle)
+		AActor* InteractionTarget = nullptr;
+		double TargetAngle = 180;
+		FVector AnglePoint = ViewCamera->GetComponentLocation();
+		for (const auto Comparison : InteractionTargets)
 		{
-			InteractionTarget = Comparison;
-			TargetAngle = ComparisonAngle;
+			double ComparisonAngle = FMath::RadiansToDegrees(MathHelper::GetAngleBetweenTwoVectors(ViewCamera->GetForwardVector(), Comparison->GetActorLocation() - AnglePoint));
+			if (IInteractionInterface::Execute_IsInteractable(Comparison) && ComparisonAngle < TargetAngle)
+			{
+				InteractionTarget = Comparison;
+				TargetAngle = ComparisonAngle;
+			}
+		}
+		if (InteractionTarget)
+		{
+			IInteractionInterface::Execute_Interact(InteractionTarget, this);
 		}
 	}
-	if (InteractionTarget)
+	else if (PlayerActionState == EPlayerActionState::EPAS_Lifting)
 	{
-		IInteractionInterface::Execute_Interact(InteractionTarget);
+		IInteractionInterface::Execute_Interact(LiftedActor, this);
+		LiftedActor = nullptr;
+		PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	}
 }
 
 FVector ABasePlayer::GetCameraLookAtLocation()
 {
 	return ViewCamera->GetComponentLocation() + (ViewCamera->GetForwardVector() * LookAtOffset);
+}
+
+FVector ABasePlayer::GetCameraForwardVector()
+{
+	return ViewCamera->GetForwardVector();
+}
+
+FRotator ABasePlayer::GetCameraRotation()
+{
+	return ViewCamera->GetComponentRotation();
 }
 
 void ABasePlayer::SwitchCameraLocation()

@@ -16,14 +16,14 @@ void ABaseInteractiveTrigger::BeginPlay()
 	}
 }
 
-void ABaseInteractiveTrigger::Interact_Implementation()
+void ABaseInteractiveTrigger::Interact_Implementation(AActor* InteractingActor)
 {
-	Execute_Trigger(this);
+	Execute_Trigger(this, this);
 }
 
-void ABaseInteractiveTrigger::Trigger_Implementation()
+void ABaseInteractiveTrigger::Trigger_Implementation(AActor* TriggeringActor)
 {
-	DeactivateInteraction();
+	Triggered = !Triggered;
 	for (auto TriggerTarget : TriggerTargets)
 	{
 		IReactToTriggerInterface* ReactTarget = Cast<IReactToTriggerInterface>(TriggerTarget);
@@ -32,17 +32,4 @@ void ABaseInteractiveTrigger::Trigger_Implementation()
 			ReactTarget->Execute_ReactToTrigger(TriggerTarget);
 		}
 	}
-}
-
-void ABaseInteractiveTrigger::ActivateInteraction()
-{
-	Super::ActivateInteraction();
-	Triggered = false;
-}
-
-void ABaseInteractiveTrigger::DeactivateInteraction()
-{
-
-	Super::DeactivateInteraction();
-	Triggered = true;
 }

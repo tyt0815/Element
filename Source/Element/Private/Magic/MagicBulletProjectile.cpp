@@ -8,6 +8,6 @@ void AMagicBulletProjectile::BeginBoxOverlap(UPrimitiveComponent* OverlappedComp
 	if (OtherActor->ActorHasTag(TEXT("Magic"))) return;
 	FHitResult HitResult;
 	BoxTrace(HitResult);
-	DamageActor(HitResult, GetOwnerATK() * DamageCoefficient);
+	DamageActor(HitResult, GetOwnerATK() * DamageCoefficient, EFourElement::EPE_None);
 	Destroy();
 }

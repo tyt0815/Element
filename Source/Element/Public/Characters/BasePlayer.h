@@ -39,6 +39,8 @@ public:
 	void SetCurrMagicCircleDist(float Value);
 	FORCEINLINE void AddInteractionTarget(AActor* InteractiveActor) { InteractionTargets.Add(InteractiveActor); }
 	FORCEINLINE void RemoveInteractionTarget(AActor* InteractiveActor) { InteractionTargets.Remove(InteractiveActor); }
+	FORCEINLINE void SetLiftedActor(AActor* Actor) { LiftedActor = Actor; }
+	FORCEINLINE void SetPlayerActionState(EPlayerActionState NewState) { PlayerActionState = NewState; }
 
 private:	
 	void Move(const FInputActionInstance& Instance);
@@ -110,14 +112,18 @@ private:
 	UPROPERTY(EditAnywhere, Category = Actions);
 	float RunSpeed;
 
+	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	float MagicCircleDistVariationSpeed;
 	TSet<AActor*> InteractionTargets;
+	AActor* LiftedActor;
 
 	/*
 	* Ä«¸Þ¶ó
 	*/
 public:
 	FVector GetCameraLookAtLocation();
+	FVector GetCameraForwardVector();
+	FRotator GetCameraRotation();
 
 protected:
 	void SwitchCameraLocation();
@@ -128,9 +134,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly);
 	UCameraComponent* ViewCamera;
 
-private:
-	UPROPERTY(VisibleAnywhere);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly);
 	USpringArmComponent* SpringArm;
+private:
 
 	UPROPERTY(EditAnywhere, Category = "View");
 	float LookAtOffset = 5000.0f;
@@ -285,7 +291,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Magic | Meteorite");
 	FVector MeteoriteSpawnOffset = {0.0f, 0.0f, 1000.0f};
 
-	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	ECastedMagic CastedMagic = ECastedMagic::ECM_None;
 	TArray<EFourElement> ElementsArray;
 	TArray<EFourElement> ElementsReadyArray;

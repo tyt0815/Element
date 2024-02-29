@@ -11,12 +11,13 @@ AGate::AGate()
 	SetRootComponent(RootArrow);
 	GateMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GateMesh"));
 	GateMesh->SetupAttachment(GetRootComponent());
+	
 }
 
 void AGate::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	OriginCollisionEnabled = GateMesh->GetCollisionEnabled();
 }
 
 void AGate::ReactToTrigger_Implementation()
@@ -26,6 +27,7 @@ void AGate::ReactToTrigger_Implementation()
 		ITriggerInterface* TriggerInterface = Cast<ITriggerInterface>(Trigger);
 		if (!TriggerInterface->Execute_IsTriggered(Trigger))
 		{
+			CloseGate();
 			return;
 		}
 	}
@@ -35,4 +37,9 @@ void AGate::ReactToTrigger_Implementation()
 void AGate::OpenGate_Implementation()
 {
 	GateMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void AGate::CloseGate_Implementation()
+{
+	GateMesh->SetCollisionEnabled(OriginCollisionEnabled);
 }

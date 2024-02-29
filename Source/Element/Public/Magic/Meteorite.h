@@ -25,7 +25,6 @@ protected:
 public:
 
 protected:
-	virtual void MultiStageHit(float Damage) override;
 	virtual void EndMagic() override;
 	
 	UPROPERTY(VisibleAnywhere)

@@ -155,14 +155,14 @@ void ABaseMagic::EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 {
 }
 
-void ABaseMagic::DamageActor(FHitResult& HitResult, float Damage)
+void ABaseMagic::DamageActor(FHitResult& HitResult, float Damage, EFourElement Element)
 {
 	if (HitResult.GetActor())
 	{
 		IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
 		if (HitInterface)
 		{
-			HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner());
+			HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner(), Element);
 		}
 		UGameplayStatics::ApplyDamage(
 			HitResult.GetActor(),
@@ -174,15 +174,15 @@ void ABaseMagic::DamageActor(FHitResult& HitResult, float Damage)
 	}
 }
 
-void ABaseMagic::SetMultiStageHit(float Damage, float Delay)
+void ABaseMagic::SetMultiStageHit(float Damage, float Delay, EFourElement Element)
 {
 	FTimerDelegate MultiStageHitDelegate;
 	MultiStageHitDelegate.BindUFunction(this, FName("MultiStageHit"), Damage);
-	MultiStageHit(Damage);
+	MultiStageHit(Damage, Element);
 	GetWorldTimerManager().SetTimer(MultiStageHitTimer, MultiStageHitDelegate, Delay, true, Delay);
 }
 
-void ABaseMagic::MultiStageHit(float Damage)
+void ABaseMagic::MultiStageHit(float Damage, EFourElement Element)
 {
 	InitActorsToIgnore();
 	while (true)
@@ -190,7 +190,7 @@ void ABaseMagic::MultiStageHit(float Damage)
 		FHitResult HitResult;
 		BoxTrace(HitResult);
 		if (HitResult.GetActor() == nullptr) break;
-		DamageActor(HitResult, Damage);
+		DamageActor(HitResult, Damage, Element);
 	}
 }
 

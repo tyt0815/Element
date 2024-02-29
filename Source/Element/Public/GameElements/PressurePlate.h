@@ -20,8 +20,10 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	virtual void Trigger_Implementation() override;
-	virtual void Halt_Implementation() override;
+	virtual void Trigger_Implementation(AActor* TriggeringActor) override;
+	virtual void Halt_Implementation(AActor* HaltingActor) override;
+
+	virtual void SetTriggerTargets() {};
 
 protected:
 

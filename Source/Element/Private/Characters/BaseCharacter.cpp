@@ -68,10 +68,6 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 	return DamageAmount;
 }
 
-void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
-{
-}
-
 void ABaseCharacter::HealCharacter(float Value)
 {
 	if (Attributes)
@@ -89,11 +85,4 @@ void ABaseCharacter::HealOverTimeCharacter(float Value, int Count, float Delay)
 	FTimerDelegate HOTDelegate;
 	HOTDelegate.BindUFunction(this, FName("HealOverTimeCharacter"), Value, Count - 1, Delay);
 	GetWorldTimerManager().SetTimer(HealHandler, HOTDelegate, Delay, false);
-}
-
-double ABaseCharacter::GetAngleBetweenTwoVectors(FVector A, FVector B)
-{
-	A.Normalize();
-	B.Normalize();
-	return FMath::Acos(A.Dot(B));
 }

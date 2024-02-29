@@ -4,6 +4,7 @@ UENUM(BlueprintType)
 enum class EPlayerActionState : uint8
 {
 	EPAS_Unoccupied UMETA(DisplayName = "Unoccupied"),
+	EPAS_Lifting UMETA(DisplayName = "Lifting"),
 	EPAS_Casting UMETA(DisplayName = "Casting")
 };
 UENUM(BlueprintType)

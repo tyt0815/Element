@@ -9,8 +9,10 @@ ABaseInteractiveActor::ABaseInteractiveActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	BaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Base"));
+	SetRootComponent(BaseMesh);
 	InteractRangeComponent = CreateDefaultSubobject<USphereComponent>(TEXT("InteractRange"));
-	SetRootComponent(InteractRangeComponent);
+	InteractRangeComponent->SetupAttachment(GetRootComponent());
 	InteractRangeComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	InteractRangeComponent->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
 	InteractRangeComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -30,9 +32,13 @@ void ABaseInteractiveActor::BeginPlay()
 	ActivateInteraction();
 }
 
-void ABaseInteractiveActor::BeginOverlapInteractRangeComponent_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+float ABaseInteractiveActor::GetInteractRangeRadius()
 {
-	if (!IInteractionInterface::Execute_IsInteractable(this)) return;
+	return InteractRangeComponent->GetScaledSphereRadius();
+}
+
+void ABaseInteractiveActor::BeTargetedToOverlappingActors()
+{
 	TSet<AActor*> OverlappingActors;
 	InteractRangeComponent->GetOverlappingActors(OverlappingActors);
 	for (const auto OverlappingActor : OverlappingActors)
@@ -46,11 +52,9 @@ void ABaseInteractiveActor::BeginOverlapInteractRangeComponent_Implementation(UP
 	}
 }
 
-void ABaseInteractiveActor::EndOverlapInteractRangeComponent_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void ABaseInteractiveActor::BeUntargetedFromActor(AActor* OtherActor)
 {
-	TSet<AActor*> OverlappingActors;
-	InteractRangeComponent->GetOverlappingActors(OverlappingActors);
-	if (OverlappingActors.Find(OtherActor) == nullptr)
+	if (IsOutOfTheRangeOfInteraction(OtherActor))
 	{
 		ABasePlayer* Player = Cast<ABasePlayer>(OtherActor);
 		if (Player)
@@ -59,6 +63,24 @@ void ABaseInteractiveActor::EndOverlapInteractRangeComponent_Implementation(UPri
 			InteractWidget->bHiddenInGame = true;
 		}
 	}
+}
+
+bool ABaseInteractiveActor::IsOutOfTheRangeOfInteraction(AActor* TargetActor)
+{
+	TSet<AActor*> OverlappingActors;
+	InteractRangeComponent->GetOverlappingActors(OverlappingActors);
+	return OverlappingActors.Find(TargetActor) == nullptr;
+}
+
+void ABaseInteractiveActor::BeginOverlapInteractRangeComponent_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!IInteractionInterface::Execute_IsInteractable(this)) return;
+	BeTargetedToOverlappingActors();
+}
+
+void ABaseInteractiveActor::EndOverlapInteractRangeComponent_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	BeUntargetedFromActor(OtherActor);
 }
 
 void ABaseInteractiveActor::ActivateInteraction()

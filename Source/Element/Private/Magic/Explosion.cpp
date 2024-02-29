@@ -14,7 +14,7 @@ void AExplosion::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	ProjectileMovementComponent->Deactivate();
 	FHitResult HitResult;
 	BoxTrace(HitResult);
-	DamageActor(HitResult, GetOwnerATK() * DamageCoefficient);
+	DamageActor(HitResult, GetOwnerATK() * DamageCoefficient, EFourElement::EPE_Ventus);
 	AttachToActor(OtherActor, FAttachmentTransformRules::KeepWorldTransform);
 	FTimerHandle ExplosionTimer;
 	GetWorldTimerManager().SetTimer(ExplosionTimer, this, &AExplosion::Explosion, ExplosionDelay);
@@ -42,7 +42,7 @@ void AExplosion::Explosion()
 		);
 		if (HitResult.GetActor() == nullptr) break;
 		ExplosionIgnore.Add(HitResult.GetActor());
-		DamageActor(HitResult, GetOwnerATK() * ExplosionDamageCoefficient);
+		DamageActor(HitResult, GetOwnerATK() * ExplosionDamageCoefficient, EFourElement::EPE_Ignis);
 	}
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ExplosionNiagara, GetActorLocation(), GetActorRotation());
 	Destroy();

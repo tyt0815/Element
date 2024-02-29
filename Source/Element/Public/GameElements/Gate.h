@@ -29,9 +29,16 @@ protected:
 	void OpenGate();
 	virtual void OpenGate_Implementation();
 
+	UFUNCTION(BlueprintNativeEvent)
+	void CloseGate();
+	virtual void CloseGate_Implementation();
+
 	UPROPERTY(VisibleAnywhere)
 	class UArrowComponent* RootArrow;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* GateMesh;
+
+private:
+	ECollisionEnabled::Type OriginCollisionEnabled;
 };
