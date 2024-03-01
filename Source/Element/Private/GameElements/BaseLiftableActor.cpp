@@ -1,19 +1,24 @@
 #include "GameElements/BaseLiftableActor.h"
+#include "Kismet/KismetMathLibrary.h"
 
 #include "Characters/BasePlayer.h"
+#include "Helper/MathHelper.h"
 
 ABaseLiftableActor::ABaseLiftableActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	BaseMesh->SetSimulatePhysics(true);
-	BaseMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	RootMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RootMesh"));
+	SetRootComponent(RootMesh);
+	RootMesh->SetSimulatePhysics(true);
+	RootMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 }
 
 void ABaseLiftableActor::Tick(float DeltaTime)
-{
+{	
 	MoveToLiftedLocation(DeltaTime);
 	RotateToLiftedRotation(DeltaTime);
+	if (Lifted && FVector::Distance(LiftingActor->GetActorLocation() + LiftingOffset, GetActorLocation()) > LiftingDistance * 1.3f) LayDown();
 }
 
 void ABaseLiftableActor::RotateToLiftedRotation(float DeltaTime)
@@ -29,9 +34,9 @@ void ABaseLiftableActor::MoveToLiftedLocation(float DeltaTime)
 {
 	if (Lifted && LiftingActor)
 	{
-		FVector TargetLocation = LiftingActor->GetActorLocation() + (FVector::ZAxisVector * LiftingZOffset);
+		FVector TargetLocation = LiftingActor->GetActorLocation() + LiftingOffset;
 		FVector Forward = LiftingActor->GetCameraForwardVector();	
-		TargetLocation += (Forward * GetInteractRangeRadius() * FMath::Clamp(LiftingDistance, 0.5f, 1.0f));
+		TargetLocation += (Forward * LiftingDistance);
 		SetActorLocation(FMath::LerpStable(GetActorLocation(), TargetLocation, DeltaTime * MoveLerpAlpha), true, nullptr, ETeleportType::ResetPhysics);
 	}
 }
@@ -49,13 +54,16 @@ void ABaseLiftableActor::Interact_Implementation(AActor* InteractingActor)
 		LiftingActor = Cast<ABasePlayer>(InteractingActor);
 		if (LiftingActor == nullptr) return;
 
-		BaseMesh->SetSimulatePhysics(false);
+		LiftingOffset = LiftingActor->GetCameraRelativeLocation();
+		RootMesh->SetSimulatePhysics(false);
 		Lifted = true;
-		DeactivateInteraction();
 		LiftingActor->SetPlayerActionState(EPlayerActionState::EPAS_Lifting);
-		LiftingActor->SetLiftedActor(this);
-		BeUntargetedFromActor(LiftingActor);
 	}
+}
+
+FString ABaseLiftableActor::GetInteractionHint_Implementation() const
+{
+	return Lifted ? FString("Place") : FString("Lift");
 }
 
 void ABaseLiftableActor::LayDown()
@@ -65,15 +73,6 @@ void ABaseLiftableActor::LayDown()
 		LiftingActor->SetPlayerActionState(EPlayerActionState::EPAS_Unoccupied);
 		LiftingActor = nullptr;
 	}
-	BaseMesh->SetSimulatePhysics(true);
+	RootMesh->SetSimulatePhysics(true);
 	Lifted = false;
-	ActivateInteraction();
-	BeTargetedToOverlappingActors();
-}
-
-void ABaseLiftableActor::EndOverlapInteractRangeComponent_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	Super::EndOverlapInteractRangeComponent_Implementation(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
-
-	if (OtherActor == LiftingActor && Lifted && IsOutOfTheRangeOfInteraction(OtherActor)) LayDown();
 }

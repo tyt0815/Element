@@ -19,12 +19,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-public:
-	virtual void Trigger_Implementation(AActor* TriggeringActor) override;
-	virtual void Halt_Implementation(AActor* HaltingActor) override;
-
-	virtual void SetTriggerTargets() {};
-
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -47,5 +41,7 @@ protected:
 	virtual void EndPressureOverlap_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 protected:
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
 	TArray<AActor*> TriggerTargets;
 };

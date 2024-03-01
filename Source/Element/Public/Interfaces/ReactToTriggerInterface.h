@@ -19,12 +19,16 @@ class ELEMENT_API IReactToTriggerInterface
 	
 public:
 	UFUNCTION(BlueprintNativeEvent)
-	void ReactToTrigger();
+	void ReactToTrigger(AActor* Trigger);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void AddTrigger(AActor* Trigger);
 	virtual void AddTrigger_Implementation(AActor* Trigger) { Triggers.Add(Trigger); }
 
-protected:
+	UFUNCTION(BlueprintNativeEvent)
+	bool IsAllTriggersTriggered();
+	virtual bool IsAllTriggersTriggered_Implementation();
+
+private:
 	TArray<AActor*> Triggers;
 };

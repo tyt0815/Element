@@ -11,6 +11,7 @@ class UCameraComponent;
 class UNiagaraSystem;
 class UNiagaraComponent;
 class UPlayerOverlay;
+class USphereComponent;
 class ABaseMagic;
 class ABaseAiming;
 class IInteractionInterface;
@@ -39,8 +40,22 @@ public:
 	void SetCurrMagicCircleDist(float Value);
 	FORCEINLINE void AddInteractionTarget(AActor* InteractiveActor) { InteractionTargets.Add(InteractiveActor); }
 	FORCEINLINE void RemoveInteractionTarget(AActor* InteractiveActor) { InteractionTargets.Remove(InteractiveActor); }
-	FORCEINLINE void SetLiftedActor(AActor* Actor) { LiftedActor = Actor; }
 	FORCEINLINE void SetPlayerActionState(EPlayerActionState NewState) { PlayerActionState = NewState; }
+	FORCEINLINE FVector GetCameraRelativeLocation() const;
+
+protected:
+
+	/*UFUNCTION()
+	void BeginOverlapInteractionRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UPROPERTY(VisibleAnywhere);
+	USphereComponent* InteractionRange;*/
+
+	FORCEINLINE bool IsInteractiveActor(AActor* Actor) const;
+	void ActivateInteractionWidget(AActor* InteractiveActor);
+	void DeactivateInteractionWidget();
+	void SetTargetInteractiveActor();
 
 private:	
 	void Move(const FInputActionInstance& Instance);
@@ -112,10 +127,19 @@ private:
 	UPROPERTY(EditAnywhere, Category = Actions);
 	float RunSpeed;
 
+	UPROPERTY(EditAnywhere, Category = Actions);
+	float InteractionRange = 700.0f;
+
+	UPROPERTY(EditAnywhere, Category = Actions);
+	float InteractionTraceInnerRadius = 10.0f;
+
+	UPROPERTY(EditAnywhere, Category = Actions);
+	float InteractionTraceOutterRadius = 100.0f;
+
 	EPlayerActionState PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	float MagicCircleDistVariationSpeed;
 	TSet<AActor*> InteractionTargets;
-	AActor* LiftedActor;
+	AActor* TargetInteractiveActor;
 
 	/*
 	* Ä«¸Þ¶ó

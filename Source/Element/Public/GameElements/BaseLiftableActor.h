@@ -1,13 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameElements/BaseInteractiveActor.h"
+#include "GameFramework/Actor.h"
+#include "Interfaces/InteractionInterface.h"
 #include "BaseLiftableActor.generated.h"
 
 class ABasePlayer;
 
 UCLASS()
-class ELEMENT_API ABaseLiftableActor : public ABaseInteractiveActor
+class ELEMENT_API ABaseLiftableActor : public AActor, public IInteractionInterface
 {
 	GENERATED_BODY()
 	
@@ -15,12 +16,9 @@ public:
 	ABaseLiftableActor();
 	virtual void Tick(float DeltaTime) override;
 
-	void RotateToLiftedRotation(float DeltaTime);
-
-	void MoveToLiftedLocation(float DeltaTime);
-
 public:
 	virtual void Interact_Implementation(AActor* InteractingActor) override;
+	virtual FString GetInteractionHint_Implementation() const override;
 
 	void LayDown();
 
@@ -31,9 +29,12 @@ public:
 	FORCEINLINE ABasePlayer* GetLiftingActor() { return LiftingActor; }
 
 protected:
-	virtual void EndOverlapInteractRangeComponent_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* RootMesh;
 
 private:
+	void MoveToLiftedLocation(float DeltaTime);
+	void RotateToLiftedRotation(float DeltaTime);
 
 	UPROPERTY(BlueprintGetter=IsLifted, Category = Lift)
 	bool Lifted = false;
@@ -41,15 +42,15 @@ private:
 	UPROPERTY(BlueprintGetter=GetLiftingActor, Category = Lift)
 	ABasePlayer* LiftingActor;
 
-	UPROPERTY(EditAnywhere, Category = Attribute)
-	float LiftingZOffset = 100.0f;
 
 	UPROPERTY(EditAnywhere, Category = Attribute)
-	float LiftingDistance = .8f;
+	float LiftingDistance = 250.0f;
 
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float MoveLerpAlpha = 10.0f;
 
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float RotateLerpAlpha = 10.0f;
+
+	FVector LiftingOffset;
 };

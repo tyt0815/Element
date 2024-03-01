@@ -20,18 +20,9 @@ void AGate::BeginPlay()
 	OriginCollisionEnabled = GateMesh->GetCollisionEnabled();
 }
 
-void AGate::ReactToTrigger_Implementation()
+void AGate::ReactToTrigger_Implementation(AActor* Trigger)
 {
-	for (auto Trigger : Triggers)
-	{
-		ITriggerInterface* TriggerInterface = Cast<ITriggerInterface>(Trigger);
-		if (!TriggerInterface->Execute_IsTriggered(Trigger))
-		{
-			CloseGate();
-			return;
-		}
-	}
-	OpenGate();
+	IReactToTriggerInterface::Execute_IsAllTriggersTriggered(this) ? OpenGate() : CloseGate();
 }
 
 void AGate::OpenGate_Implementation()

@@ -29,6 +29,10 @@ public:
 	bool IsInteractable() const;
 	bool IsInteractable_Implementation() const { return Interactable; }
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Interaction)
+	FString GetInteractionHint() const;
+	virtual FString GetInteractionHint_Implementation() const { return FString("Interaction"); }
+
 protected:
 	bool Interactable;
 };

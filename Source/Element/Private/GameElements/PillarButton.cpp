@@ -3,7 +3,10 @@
 
 APillarButton::APillarButton()
 {
-	BaseMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	PrimaryActorTick.bCanEverTick = false;
+
+	RootMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RootMesh"));
+	SetRootComponent(RootMesh);
 	ButtonMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ButtonMesh"));
 	ButtonMesh->SetupAttachment(GetRootComponent());
 	ButtonMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -12,9 +15,12 @@ APillarButton::APillarButton()
 void APillarButton::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ITriggerInterface::Execute_InitTriggerInterface(this, TriggerTargets);
 }
 
-void APillarButton::Trigger_Implementation(AActor* TriggeringActor)
+void APillarButton::Interact_Implementation(AActor* InteractingActor)
 {
-	Super::Trigger_Implementation(TriggeringActor);
+	ITriggerInterface::Execute_IsTriggered(this) ?
+		ITriggerInterface::Execute_Trigger(this, false, InteractingActor, TriggerTargets) : ITriggerInterface::Execute_Trigger(this, true, InteractingActor, TriggerTargets);
 }

@@ -3,14 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameElements/BaseInteractiveTrigger.h"
+#include "GameFramework/Actor.h"
+#include "Interfaces/InteractionInterface.h"
+#include "Interfaces/TriggerInterface.h"
 #include "PillarButton.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ELEMENT_API APillarButton : public ABaseInteractiveTrigger
+class ELEMENT_API APillarButton : public AActor, public IInteractionInterface, public ITriggerInterface
 {
 	GENERATED_BODY()
 	
@@ -20,11 +22,16 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-public:
-	virtual void Trigger_Implementation(AActor* TriggeringgActor) override;
+protected:
+	virtual void Interact_Implementation(AActor* InteractingActor) override;
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* RootMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* ButtonMesh;
+
+	UPROPERTY(EditInstanceOnly)
+	TArray<AActor*> TriggerTargets;
 };

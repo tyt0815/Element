@@ -20,7 +20,7 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	virtual void ReactToTrigger_Implementation() override;
+	virtual void ReactToTrigger_Implementation(AActor* Trigger) override;
 	
 
 protected:

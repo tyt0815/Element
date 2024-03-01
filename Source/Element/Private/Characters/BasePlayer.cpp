@@ -1,6 +1,7 @@
 #include "Characters/BasePlayer.h"
 #include "Components/SceneComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -36,8 +37,17 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 	SpringArm->bUsePawnControlRotation = true;
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(SpringArm);
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	/*InteractionRange = CreateDefaultSubobject<USphereComponent>(TEXT("InteractionRange"));
+	InteractionRange->SetupAttachment(GetRootComponent());
+	InteractionRange->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel3);
+	InteractionRange->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	InteractionRange->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	InteractionRange->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Overlap);
+	InteractionRange->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
+	InteractionRange->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Overlap);
+	InteractionRange->SetCollisionResponseToChannel(ECollisionChannel::ECC_Vehicle, ECollisionResponse::ECR_Overlap);*/
 
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 	InitElementsArray(EFourElement::EPE_Ignis, EFourElement::EPE_Aqua, EFourElement::EPE_Ventus, EFourElement::EPE_Terra);
 	InitElementsReadyArray(EFourElement::EPE_Ignis, EFourElement::EPE_Aqua, EFourElement::EPE_Ventus, EFourElement::EPE_Terra);
 	EmptyElementsSeletedArray();
@@ -49,8 +59,7 @@ void ABasePlayer::Tick(float DeltaTime)
 	
 	SwitchCameraLocation();
 
-	//SCREEN_LOG(4, FString::SanitizeFloat(FMath::RadiansToDegrees(GetAngleBetweenTwoVectors(ViewCamera->GetForwardVector(), FVector::XAxisVector))));
-	
+	SetTargetInteractiveActor();
 }
 
 void ABasePlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -114,6 +123,8 @@ void ABasePlayer::BeginPlay()
 
 	InitPlayerOverlay();
 	UpdateElementSlotUI();
+
+	//InteractionRange->OnComponentBeginOverlap.AddDynamic(this, &ABasePlayer::BeginOverlapInteractionRange);
 }
 
 void ABasePlayer::InitMagicCircleDistVariationSpeed()
@@ -131,10 +142,103 @@ void ABasePlayer::SetCurrMagicCircleDist(float Value)
 	CurrMagicCircleDist = FMath::Clamp(Value, MagicCircleCastableRange, MagicCircleRange);
 }
 
+FVector ABasePlayer::GetCameraRelativeLocation() const
+{
+	return ViewCamera->GetRelativeLocation();
+}
+
+//void ABasePlayer::BeginOverlapInteractionRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+//{
+//	bool b = OtherActor->GetClass()->ImplementsInterface(UInteractionInterface::StaticClass());
+//	b = OtherActor->Implements<UInteractionInterface>();
+//	if(b) InteractionTargets.Add(OtherActor);
+//}
+
+bool ABasePlayer::IsInteractiveActor(AActor* Actor) const
+{
+	return Actor->Implements<UInteractionInterface>();;
+}
+
+void ABasePlayer::ActivateInteractionWidget(AActor* InteractiveActor)
+{
+	SCREEN_LOG(0, IInteractionInterface::Execute_GetInteractionHint(InteractiveActor));
+}
+
+void ABasePlayer::DeactivateInteractionWidget()
+{
+	SCREEN_LOG(0, TEXT("No Target"));
+}
+
+void ABasePlayer::SetTargetInteractiveActor()
+{
+	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied)
+	{
+		TArray<AActor*> ToIgnore;
+		FVector Start = ViewCamera->GetComponentLocation(), End = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * InteractionRange;
+		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
+		while (true)
+		{
+			FHitResult HitResult;
+			UKismetSystemLibrary::SphereTraceSingleForObjects(
+				this,
+				Start,
+				End,
+				InteractionTraceInnerRadius,
+				ObjectTypes,
+				false,
+				ToIgnore,
+				EDrawDebugTrace::None,
+				HitResult,
+				true
+			);
+			TargetInteractiveActor = HitResult.GetActor();
+			if (TargetInteractiveActor == nullptr)
+			{
+				break;
+			}
+			else if (IsInteractiveActor(TargetInteractiveActor))
+			{
+				ActivateInteractionWidget(TargetInteractiveActor);
+				return;
+			}
+			ToIgnore.Add(TargetInteractiveActor);
+		}
+		while (true)
+		{
+			FHitResult HitResult;
+			UKismetSystemLibrary::SphereTraceSingleForObjects(
+				this,
+				Start,
+				End,
+				InteractionTraceOutterRadius,
+				ObjectTypes,
+				false,
+				ToIgnore,
+				EDrawDebugTrace::None,
+				HitResult,
+				true
+			);
+			TargetInteractiveActor = HitResult.GetActor();
+			if (TargetInteractiveActor == nullptr)
+			{
+				DeactivateInteractionWidget();
+				return;
+			}
+			else if (IsInteractiveActor(TargetInteractiveActor))
+			{
+				ActivateInteractionWidget(TargetInteractiveActor);
+				return;
+			}
+			ToIgnore.Add(TargetInteractiveActor);
+		}
+	}
+}
+
 void ABasePlayer::Move(const FInputActionInstance& Instance)
 {
 	FVector2D MovementVector = Instance.GetValue().Get<FVector2d>();
-
 	if (Controller != nullptr)
 	{
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -368,30 +472,10 @@ void ABasePlayer::SubSkill2Triggered(const FInputActionInstance& Instance)
 
 void ABasePlayer::InteractionTriggered(const FInputActionInstance& Instance)
 {
-	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied)
+	if (PlayerActionState <= EPlayerActionState::EPAS_Lifting && TargetInteractiveActor)
 	{
-		AActor* InteractionTarget = nullptr;
-		double TargetAngle = 180;
-		FVector AnglePoint = ViewCamera->GetComponentLocation();
-		for (const auto Comparison : InteractionTargets)
-		{
-			double ComparisonAngle = FMath::RadiansToDegrees(MathHelper::GetAngleBetweenTwoVectors(ViewCamera->GetForwardVector(), Comparison->GetActorLocation() - AnglePoint));
-			if (IInteractionInterface::Execute_IsInteractable(Comparison) && ComparisonAngle < TargetAngle)
-			{
-				InteractionTarget = Comparison;
-				TargetAngle = ComparisonAngle;
-			}
-		}
-		if (InteractionTarget)
-		{
-			IInteractionInterface::Execute_Interact(InteractionTarget, this);
-		}
-	}
-	else if (PlayerActionState == EPlayerActionState::EPAS_Lifting)
-	{
-		IInteractionInterface::Execute_Interact(LiftedActor, this);
-		LiftedActor = nullptr;
-		PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
+		IInteractionInterface::Execute_Interact(TargetInteractiveActor, this);
+		if (PlayerActionState == EPlayerActionState::EPAS_Lifting) ActivateInteractionWidget(TargetInteractiveActor);
 	}
 }
 

@@ -17,26 +17,27 @@ class ELEMENT_API ITriggerInterface
 {
 	GENERATED_BODY()
 
+protected:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)
+	void InitTriggerInterface(UPARAM(ref) TArray<AActor*>& TriggerTargets);
+	virtual void InitTriggerInterface_Implementation(TArray<AActor*>& TriggerTargets);
+
 public:
-	//ITriggerInterface();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)
-	void Trigger(AActor* TriggeringActor);
-	//virtual void Trigger_Implementation(AActor* TriggeringActor);
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)
-	void Halt(AActor* HaltingActor);
-	//virtual void Halt_Implementation(AActor* HaltingActor);
+	void Trigger(bool Condition, AActor* TriggeringActor, UPARAM(ref) TArray<AActor*>& TriggerTargets);
+	virtual void Trigger_Implementation(bool Condition, AActor* TriggeringActor, TArray<AActor*>& TriggerTargets);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)
 	bool IsTriggered() const;
-	bool IsTriggered_Implementation() const { return Triggered; }
+	virtual bool IsTriggered_Implementation() const { return Triggered; }
 	
 protected:
-	//void SignalToTargets();
-	//void InitTriggerTargets();
-	//virtual void SetTriggerTargets() = 0;
+	void SignalToTargets(TArray<AActor*>& TriggerTargets);
+	void InitTriggerTargets(TArray<AActor*>& TriggerTargets);
 
-	bool Triggered;
-	//TArray<AActor*> TriggerTargets;
+	bool Triggered = false;
+
+private:
+	bool Initialized = false;
 };
