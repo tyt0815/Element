@@ -41,7 +41,7 @@ private:
 	float FollowingLerpAlpha = 0.01f;
 
 	UPROPERTY(EditAnywhere, Category = Attribute)
-	float AcceptanceRadius = 30.0f;
+	float AcceptanceRadius = 100.0f;
 
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float AttackDelay = 0.1;

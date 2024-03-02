@@ -6,6 +6,7 @@
 #include "PlayerOverlay.generated.h"
 
 class UHorizontalBox;
+class UInteractionWidget;
 
 UCLASS()
 class ELEMENT_API UPlayerOverlay : public UUserWidget
@@ -21,6 +22,8 @@ public:
 		const TArray<EFourElement>& ElementsReadyArray,
 		const TArray<EFourElement>& ElementsSelectedArray
 	);
+	void ShowInteractionWidget(bool WidgetShowed, FString InteractionHint);
+
 
 private:
 	void SetElementSlots(const TArray<EFourElement>& ElementsArray, UHorizontalBox* Slots);
@@ -33,4 +36,7 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UHorizontalBox* SelectedSlots;
+
+	UPROPERTY(meta = (BindWidget))
+	UInteractionWidget* InteractionWidget;
 };

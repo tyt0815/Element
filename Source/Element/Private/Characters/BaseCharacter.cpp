@@ -46,16 +46,16 @@ void ABaseCharacter::BeginPlay()
 	Attributes->SetMP(Attributes->GetMaxMP());
 }
 
-FVector ABaseCharacter::GetUnderCharacterFeetLocation()
-{
-	return GetCapsuleComponent()->GetComponentLocation() - FVector::ZAxisVector * GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-}
-
 float ABaseCharacter::GetATK()
 {
 	float ATK = 0;
 	ATK += Attributes ? Attributes->GetATK() : 0;
 	return ATK;
+}
+
+FVector ABaseCharacter::GetUnderCharacterFeetLocation()
+{
+	return GetCapsuleComponent()->GetComponentLocation() - FVector::ZAxisVector * GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 }
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)

@@ -37,15 +37,6 @@ ABasePlayer::ABasePlayer() : ABaseCharacter()
 	SpringArm->bUsePawnControlRotation = true;
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(SpringArm);
-	/*InteractionRange = CreateDefaultSubobject<USphereComponent>(TEXT("InteractionRange"));
-	InteractionRange->SetupAttachment(GetRootComponent());
-	InteractionRange->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel3);
-	InteractionRange->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	InteractionRange->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	InteractionRange->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Overlap);
-	InteractionRange->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
-	InteractionRange->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Overlap);
-	InteractionRange->SetCollisionResponseToChannel(ECollisionChannel::ECC_Vehicle, ECollisionResponse::ECR_Overlap);*/
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	InitElementsArray(EFourElement::EPE_Ignis, EFourElement::EPE_Aqua, EFourElement::EPE_Ventus, EFourElement::EPE_Terra);
@@ -121,10 +112,10 @@ void ABasePlayer::BeginPlay()
 	FlyAimingActor = SpawnAimingActor(FlyAimingClass);
 	CurrMagicCircleDist = MagicCircleRange;
 
+	RunSpeed = GetCharacterMovement()->MaxWalkSpeed;
+
 	InitPlayerOverlay();
 	UpdateElementSlotUI();
-
-	//InteractionRange->OnComponentBeginOverlap.AddDynamic(this, &ABasePlayer::BeginOverlapInteractionRange);
 }
 
 void ABasePlayer::InitMagicCircleDistVariationSpeed()
@@ -139,7 +130,7 @@ void ABasePlayer::IncreaseMagicCircleDistVariationSpeed()
 
 void ABasePlayer::SetCurrMagicCircleDist(float Value)
 {
-	CurrMagicCircleDist = FMath::Clamp(Value, MagicCircleCastableRange, MagicCircleRange);
+	CurrMagicCircleDist = FMath::Clamp(Value, FlyMagicCircleCastableRange, MagicCircleRange);
 }
 
 FVector ABasePlayer::GetCameraRelativeLocation() const
@@ -147,26 +138,21 @@ FVector ABasePlayer::GetCameraRelativeLocation() const
 	return ViewCamera->GetRelativeLocation();
 }
 
-//void ABasePlayer::BeginOverlapInteractionRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-//{
-//	bool b = OtherActor->GetClass()->ImplementsInterface(UInteractionInterface::StaticClass());
-//	b = OtherActor->Implements<UInteractionInterface>();
-//	if(b) InteractionTargets.Add(OtherActor);
-//}
-
 bool ABasePlayer::IsInteractiveActor(AActor* Actor) const
 {
-	return Actor->Implements<UInteractionInterface>();;
+	return Actor == nullptr ? false : Actor->Implements<UInteractionInterface>();
 }
 
-void ABasePlayer::ActivateInteractionWidget(AActor* InteractiveActor)
+void ABasePlayer::ShowInteractionWidget(bool WidgetShowed, AActor* InteractiveActor)
 {
-	SCREEN_LOG(0, IInteractionInterface::Execute_GetInteractionHint(InteractiveActor));
-}
-
-void ABasePlayer::DeactivateInteractionWidget()
-{
-	SCREEN_LOG(0, TEXT("No Target"));
+	if (IsInteractiveActor(InteractiveActor))
+	{
+		PlayerOverlay->ShowInteractionWidget(WidgetShowed, IInteractionInterface::Execute_GetInteractionHint(InteractiveActor));
+	}
+	else
+	{
+		PlayerOverlay->ShowInteractionWidget(false, FString("Interaction"));
+	}
 }
 
 void ABasePlayer::SetTargetInteractiveActor()
@@ -200,7 +186,7 @@ void ABasePlayer::SetTargetInteractiveActor()
 			}
 			else if (IsInteractiveActor(TargetInteractiveActor))
 			{
-				ActivateInteractionWidget(TargetInteractiveActor);
+				ShowInteractionWidget(true, TargetInteractiveActor);
 				return;
 			}
 			ToIgnore.Add(TargetInteractiveActor);
@@ -223,12 +209,12 @@ void ABasePlayer::SetTargetInteractiveActor()
 			TargetInteractiveActor = HitResult.GetActor();
 			if (TargetInteractiveActor == nullptr)
 			{
-				DeactivateInteractionWidget();
+				ShowInteractionWidget(false, nullptr);
 				return;
 			}
 			else if (IsInteractiveActor(TargetInteractiveActor))
 			{
-				ActivateInteractionWidget(TargetInteractiveActor);
+				ShowInteractionWidget(true, TargetInteractiveActor);
 				return;
 			}
 			ToIgnore.Add(TargetInteractiveActor);
@@ -436,7 +422,7 @@ void ABasePlayer::ElementSelectAction4Started(const FInputActionInstance& Instan
 void ABasePlayer::MouseWheelTriggered(const FInputActionInstance& Instance)
 {
 	float InputValue = Instance.GetValue().Get<float>();
-	CurrMagicCircleDist = FMath::Clamp(CurrMagicCircleDist + (InputValue * 10), MagicCircleCastableRange, MagicCircleRange);
+	CurrMagicCircleDist = FMath::Clamp(CurrMagicCircleDist + (InputValue * 10), FlyMagicCircleCastableRange, MagicCircleRange);
 }
 
 void ABasePlayer::SubSkill1Started(const FInputActionInstance& Instance)
@@ -475,7 +461,7 @@ void ABasePlayer::InteractionTriggered(const FInputActionInstance& Instance)
 	if (PlayerActionState <= EPlayerActionState::EPAS_Lifting && TargetInteractiveActor)
 	{
 		IInteractionInterface::Execute_Interact(TargetInteractiveActor, this);
-		if (PlayerActionState == EPlayerActionState::EPAS_Lifting) ActivateInteractionWidget(TargetInteractiveActor);
+		if (PlayerActionState == EPlayerActionState::EPAS_Lifting) ShowInteractionWidget(true, TargetInteractiveActor);
 	}
 }
 
@@ -508,13 +494,14 @@ void ABasePlayer::SwitchCameraLocation()
 		return;
 		break;
 	}
-	ViewCamera->SetRelativeLocation(TargetCameraLocation);
+	ViewCamera->SetRelativeLocation(FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), TargetCameraLocation, CameraMoveRate));
 }
 
 void ABasePlayer::ZoomOutCamera()
 {
 	SpringArm->TargetArmLength = FMath::Lerp<float, float>(SpringArm->TargetArmLength, OriginSpringArmLength, CameraMoveRate);
 	TargetCameraLocation = FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), OriginCameraLocation, CameraMoveRate);
+	TargetCameraLocation = OriginCameraLocation;
 	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
@@ -523,20 +510,12 @@ void ABasePlayer::ZoomOutCamera()
 void ABasePlayer::ZoomInCamera()
 {
 	SpringArm->TargetArmLength = FMath::Lerp<float, float>(SpringArm->TargetArmLength, ZoomSpringArmLength, CameraMoveRate);
-	TargetCameraLocation = FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), ZoomCameraLocation, CameraMoveRate);
+	//TargetCameraLocation = FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), ZoomCameraLocation, CameraMoveRate);
+	TargetCameraLocation = OriginCameraLocation;
+	OriginCameraLocation.Y = ZoomCameraOffset;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	bUseControllerRotationYaw = true;
-}
-
-void ABasePlayer::ShakeCamera(float Power)
-{
-	FVector Offset;
-	Offset.X = FMath::RandRange(-1.0f, 1.0f);
-	Offset.Y = FMath::RandRange(-1.0f, 1.0f);
-	Offset.Z = FMath::RandRange(-1.0f, 1.0f);
-	Offset.Normalize();
-	ViewCamera->SetRelativeLocation(TargetCameraLocation + (Offset * Power));
 }
 
 FVector ABasePlayer::GetChestLocation()
@@ -546,7 +525,7 @@ FVector ABasePlayer::GetChestLocation()
 
 FVector ABasePlayer::GetCharacterFrontMagicCircle()
 {
-	return GetChestLocation() + ViewCamera->GetRightVector() * ZoomCameraLocation.Y + (GetActorForwardVector() * CharacterFrontCastableRange);
+	return GetChestLocation() + ViewCamera->GetRightVector() * ZoomCameraOffset + (GetActorForwardVector() * CharacterFrontCastableRange);
 }
 
 EFourElement ABasePlayer::GetSelectedElement(uint8 i)
@@ -586,13 +565,14 @@ bool ABasePlayer::LocateCharacterFrontMagicCircle(FVector Offset, FVector& Locat
 
 bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 {
-	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleCastableRange;
-	FVector Block;
-	if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
+	//FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleCastableRange;
+	//FVector Block;
+	/*if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
 	{
 		Location = Block;
 		return false;
-	}
+	}*/
+	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * (SpringArm->TargetArmLength + ViewCamera->GetRelativeLocation().X);
 	FVector End = Start + ViewCamera->GetForwardVector() * (Offset.X + MagicCircleRange) + ViewCamera->GetRightVector() * Offset.Y + ViewCamera->GetUpVector() * Offset.Z;
 	
 	TArray<AActor*> ActorsToIgnore;
@@ -601,12 +581,10 @@ bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
-	UKismetSystemLibrary::BoxTraceSingleForObjects(
+	UKismetSystemLibrary::LineTraceSingleForObjects(
 		this,
-		Start - ViewCamera->GetUpVector() * FlyMagicCircleBoxTraceHalf.Z,
-		End - ViewCamera->GetUpVector() * FlyMagicCircleBoxTraceHalf.Z,
-		FlyMagicCircleBoxTraceHalf,
-		FRotator::ZeroRotator,
+		Start,
+		End,
 		ObjectTypes,
 		false,
 		ActorsToIgnore,
@@ -631,13 +609,14 @@ bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 
 bool ABasePlayer::LocateFlyMagicCircle(FVector Offset, FVector& Location)
 {
-	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleCastableRange;
-	FVector Block;
-	if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
+	//FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleCastableRange;
+	/*if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
 	{
 		Location = Block;
 		return false;
-	}
+	}*/
+	FVector Block;
+	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * (SpringArm->TargetArmLength + ViewCamera->GetRelativeLocation().X);
 	FVector End = Start + ViewCamera->GetForwardVector() * Offset.X + ViewCamera->GetRightVector() * Offset.Y + ViewCamera->GetUpVector() * Offset.Z;
 	if (IsBlocked(Start, End, Block))
 	{
@@ -702,11 +681,6 @@ FRotator ABasePlayer::GetCharacterFrontMagicCircleRotator()
 	y = z.Cross(x);
 	FRotator Rotator = FMatrix(x, y, z, FVector::ZeroVector).Rotator();
 	return Rotator;
-}
-
-FRotator ABasePlayer::GetFloorMagicCircleRotator()
-{
-	return FRotator();
 }
 
 FRotator ABasePlayer::GetFlyMagicCircleRotator()

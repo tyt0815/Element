@@ -6,6 +6,7 @@
 
 #include "Element/DebugMacro.h"
 #include "HUDs/ElementSlotWidget.h"
+#include "HUDs/InteractionWidget.h"
 
 void UPlayerOverlay::NativeConstruct()
 {
@@ -20,6 +21,12 @@ void UPlayerOverlay::SetElementSlots(const TArray<EFourElement>& ElementsArray,
 	SetElementSlots(ElementsArray, ElementSlots);
 	SetElementSlots(ElementsReadyArray, ReadySlots);
 	SetElementSlots(ElementsSelectedArray, SelectedSlots);
+}
+
+void UPlayerOverlay::ShowInteractionWidget(bool WidgetShowed, FString InteractionHint)
+{
+	WidgetShowed ? InteractionWidget->SetVisibility(ESlateVisibility::HitTestInvisible) : InteractionWidget->SetVisibility(ESlateVisibility::Hidden);
+	InteractionWidget->SetInteractionHint(InteractionHint);
 }
 
 void UPlayerOverlay::SetElementSlots(const TArray<EFourElement>& ElementsArray, UHorizontalBox* Slots)
