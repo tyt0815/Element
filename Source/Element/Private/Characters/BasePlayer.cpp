@@ -118,135 +118,6 @@ void ABasePlayer::BeginPlay()
 	UpdateElementSlotUI();
 }
 
-void ABasePlayer::InitMagicCircleDistVariationSpeed()
-{
-	MagicCircleDistVariationSpeed = 1.0f;
-}
-
-void ABasePlayer::IncreaseMagicCircleDistVariationSpeed()
-{
-	MagicCircleDistVariationSpeed = FMath::Clamp(MagicCircleDistVariationSpeed * 1.2f, 0, 50.0f);
-}
-
-void ABasePlayer::SetCurrMagicCircleDist(float Value)
-{
-	CurrMagicCircleDist = FMath::Clamp(Value, FlyMagicCircleCastableRange, MagicCircleRange);
-}
-
-FVector ABasePlayer::GetCameraRelativeLocation() const
-{
-	return ViewCamera->GetRelativeLocation();
-}
-
-bool ABasePlayer::IsInteractiveActor(AActor* Actor) const
-{
-	return Actor == nullptr ? false : Actor->Implements<UInteractionInterface>();
-}
-
-void ABasePlayer::ShowInteractionWidget(bool WidgetShowed, AActor* InteractiveActor)
-{
-	if (IsInteractiveActor(InteractiveActor))
-	{
-		PlayerOverlay->ShowInteractionWidget(WidgetShowed, IInteractionInterface::Execute_GetInteractionHint(InteractiveActor));
-	}
-	else
-	{
-		PlayerOverlay->ShowInteractionWidget(false, FString("Interaction"));
-	}
-}
-
-void ABasePlayer::SetTargetInteractiveActor()
-{
-	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied)
-	{
-		TArray<AActor*> ToIgnore;
-		FVector Start = ViewCamera->GetComponentLocation(), End = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * InteractionRange;
-		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
-		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
-		while (true)
-		{
-			FHitResult HitResult;
-			UKismetSystemLibrary::SphereTraceSingleForObjects(
-				this,
-				Start,
-				End,
-				InteractionTraceInnerRadius,
-				ObjectTypes,
-				false,
-				ToIgnore,
-				EDrawDebugTrace::None,
-				HitResult,
-				true
-			);
-			TargetInteractiveActor = HitResult.GetActor();
-			if (TargetInteractiveActor == nullptr)
-			{
-				break;
-			}
-			else if (IsInteractiveActor(TargetInteractiveActor))
-			{
-				ShowInteractionWidget(true, TargetInteractiveActor);
-				return;
-			}
-			ToIgnore.Add(TargetInteractiveActor);
-		}
-		while (true)
-		{
-			FHitResult HitResult;
-			UKismetSystemLibrary::SphereTraceSingleForObjects(
-				this,
-				Start,
-				End,
-				InteractionTraceOutterRadius,
-				ObjectTypes,
-				false,
-				ToIgnore,
-				EDrawDebugTrace::None,
-				HitResult,
-				true
-			);
-			TargetInteractiveActor = HitResult.GetActor();
-			if (TargetInteractiveActor == nullptr)
-			{
-				ShowInteractionWidget(false, nullptr);
-				return;
-			}
-			else if (IsInteractiveActor(TargetInteractiveActor))
-			{
-				ShowInteractionWidget(true, TargetInteractiveActor);
-				return;
-			}
-			ToIgnore.Add(TargetInteractiveActor);
-		}
-	}
-}
-
-void ABasePlayer::Move(const FInputActionInstance& Instance)
-{
-	FVector2D MovementVector = Instance.GetValue().Get<FVector2d>();
-	if (Controller != nullptr)
-	{
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		AddMovementInput(ForwardDirection, MovementVector.X);
-		AddMovementInput(RightDirection, MovementVector.Y);
-	}
-}
-
-void ABasePlayer::Look(const FInputActionInstance& Instance)
-{
-	FVector2D LookVector = Instance.GetValue().Get<FVector2D>();
-	if (Controller != nullptr)
-	{
-		AddControllerYawInput(LookVector.X);
-		AddControllerPitchInput(LookVector.Y);
-	}
-}
-
 void ABasePlayer::AttackStarted(const FInputActionInstance& Instance)
 {
 	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied)
@@ -300,7 +171,7 @@ void ABasePlayer::CastStarted(const FInputActionInstance& Instance)
 			break;
 		case EFourElement::EPE_Ventus:
 			CastedMagic = ECastedMagic::ECM_VV;
-			break; 
+			break;
 		case EFourElement::EPE_Terra:
 			CastedMagic = ECastedMagic::ECM_TT;
 			break;
@@ -438,7 +309,7 @@ void ABasePlayer::SubSkill1Ongoing(const FInputActionInstance& Instance)
 
 void ABasePlayer::SubSkill1Triggered(const FInputActionInstance& Instance)
 {
-	
+
 }
 
 void ABasePlayer::SubSkill2Started(const FInputActionInstance& Instance)
@@ -465,19 +336,24 @@ void ABasePlayer::InteractionTriggered(const FInputActionInstance& Instance)
 	}
 }
 
-FVector ABasePlayer::GetCameraLookAtLocation()
-{
-	return ViewCamera->GetComponentLocation() + (ViewCamera->GetForwardVector() * LookAtOffset);
-}
-
-FVector ABasePlayer::GetCameraForwardVector()
+FVector ABasePlayer::GetCameraForwardVector() const
 {
 	return ViewCamera->GetForwardVector();
 }
 
-FRotator ABasePlayer::GetCameraRotation()
+FRotator ABasePlayer::GetCameraRotation() const
 {
 	return ViewCamera->GetComponentRotation();
+}
+
+FVector ABasePlayer::GetCameraRelativeLocation() const
+{
+	return ViewCamera->GetRelativeLocation();
+}
+
+FVector ABasePlayer::GetCameraLookAtLocation() const
+{
+	return ViewCamera->GetComponentLocation() + (ViewCamera->GetForwardVector() * LookAtOffset);
 }
 
 void ABasePlayer::SwitchCameraLocation()
@@ -518,6 +394,161 @@ void ABasePlayer::ZoomInCamera()
 	bUseControllerRotationYaw = true;
 }
 
+void ABasePlayer::ShowInteractionWidget(bool WidgetShowed, AActor* InteractiveActor)
+{
+	if (IsInteractiveActor(InteractiveActor))
+	{
+		PlayerOverlay->ShowInteractionWidget(WidgetShowed, IInteractionInterface::Execute_GetInteractionHint(InteractiveActor));
+	}
+	else
+	{
+		PlayerOverlay->ShowInteractionWidget(false, FString("Interaction"));
+	}
+}
+
+void ABasePlayer::UpdateElementSlotUI()
+{
+	TArray<EFourElement> SelectedArray;
+	for (int i = 0; i < ElementsSelectedArray.Num(); ++i)
+	{
+		SelectedArray.Add(GetSelectedElement(i));
+	}
+	PlayerOverlay->SetElementSlots(ElementsArray, ElementsReadyArray, SelectedArray);
+}
+
+void ABasePlayer::InitPlayerOverlay()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		APlayerHUD* PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
+		if (PlayerHUD)
+		{
+			PlayerOverlay = Cast<UPlayerOverlay>(PlayerHUD->GetPlayerOverlay());
+		}
+	}
+}
+
+bool ABasePlayer::IsInteractiveActor(AActor* Actor) const
+{
+	return Actor == nullptr ? false : Actor->Implements<UInteractionInterface>();
+}
+
+void ABasePlayer::SetTargetInteractiveActor()
+{
+	if (PlayerActionState == EPlayerActionState::EPAS_Unoccupied)
+	{
+		TArray<AActor*> ToIgnore;
+		FVector Start = ViewCamera->GetComponentLocation(), End = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * InteractionRange;
+		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
+		while (true)
+		{
+			FHitResult HitResult;
+			UKismetSystemLibrary::SphereTraceSingleForObjects(
+				this,
+				Start,
+				End,
+				InteractionTraceInnerRadius,
+				ObjectTypes,
+				false,
+				ToIgnore,
+				EDrawDebugTrace::None,
+				HitResult,
+				true
+			);
+			TargetInteractiveActor = HitResult.GetActor();
+			if (TargetInteractiveActor == nullptr)
+			{
+				break;
+			}
+			else if (IsInteractiveActor(TargetInteractiveActor))
+			{
+				ShowInteractionWidget(true, TargetInteractiveActor);
+				return;
+			}
+			ToIgnore.Add(TargetInteractiveActor);
+		}
+		while (true)
+		{
+			FHitResult HitResult;
+			UKismetSystemLibrary::SphereTraceSingleForObjects(
+				this,
+				Start,
+				End,
+				InteractionTraceOutterRadius,
+				ObjectTypes,
+				false,
+				ToIgnore,
+				EDrawDebugTrace::None,
+				HitResult,
+				true
+			);
+			TargetInteractiveActor = HitResult.GetActor();
+			if (TargetInteractiveActor == nullptr)
+			{
+				ShowInteractionWidget(false, nullptr);
+				return;
+			}
+			else if (IsInteractiveActor(TargetInteractiveActor))
+			{
+				ShowInteractionWidget(true, TargetInteractiveActor);
+				return;
+			}
+			ToIgnore.Add(TargetInteractiveActor);
+		}
+	}
+}
+
+void ABasePlayer::Move(const FInputActionInstance& Instance)
+{
+	FVector2D MovementVector = Instance.GetValue().Get<FVector2d>();
+	if (Controller != nullptr)
+	{
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		AddMovementInput(ForwardDirection, MovementVector.X);
+		AddMovementInput(RightDirection, MovementVector.Y);
+	}
+}
+
+void ABasePlayer::Look(const FInputActionInstance& Instance)
+{
+	FVector2D LookVector = Instance.GetValue().Get<FVector2D>();
+	if (Controller != nullptr)
+	{
+		AddControllerYawInput(LookVector.X);
+		AddControllerPitchInput(LookVector.Y);
+	}
+}
+
+void ABasePlayer::InitMagicCircleDistVariationSpeed()
+{
+	MagicCircleDistVariationSpeed = 1.0f;
+}
+
+void ABasePlayer::InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth)
+{
+	ElementsArray.SetNum(4);
+	ElementsArray[0] = First;
+	ElementsArray[1] = Second;
+	ElementsArray[2] = Third;
+	ElementsArray[3] = Forth;
+}
+
+void ABasePlayer::InitElementsReadyArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth)
+{
+	ElementsReadyArray.SetNum(4);
+	ElementsReadyArray[0] = First;
+	ElementsReadyArray[1] = Second;
+	ElementsReadyArray[2] = Third;
+	ElementsReadyArray[3] = Forth;
+}
+
 FVector ABasePlayer::GetChestLocation()
 {
 	return GetActorLocation() + FVector(0, 0, ChestLocationZOffset);
@@ -526,151 +557,6 @@ FVector ABasePlayer::GetChestLocation()
 FVector ABasePlayer::GetCharacterFrontMagicCircle()
 {
 	return GetChestLocation() + ViewCamera->GetRightVector() * ZoomCameraOffset + (GetActorForwardVector() * CharacterFrontCastableRange);
-}
-
-EFourElement ABasePlayer::GetSelectedElement(uint8 i)
-{
-	if ((i < 0 || i > ElementsSelectedArray.Num()) || (ElementsSelectedArray[i] < 0 || ElementsSelectedArray[i] > ElementsArray.Num()))
-	{
-		return EFourElement::EPE_None;
-	}
-	return ElementsArray[ElementsSelectedArray[i]];
-}
-
-void ABasePlayer::SetSelectedElement(uint8 i, EFourElement Element)
-{
-	if ((i < 0 || i > ElementsSelectedArray.Num()) && (ElementsSelectedArray[i] < 0 || ElementsSelectedArray[i] > ElementsArray.Num()))
-	{
-		return;
-	}
-	ElementsArray[ElementsSelectedArray[i]] = Element;
-}
-
-bool ABasePlayer::LocateCharacterFrontMagicCircle(FVector Offset, FVector& Location)
-{
-	FVector Chest = GetChestLocation();
-	FVector CastableStart = GetCharacterFrontMagicCircle();
-	FVector Dummy;
-	if (IsBlocked(Chest, CastableStart, Dummy))
-	{
-		return false;
-	}
-	FRotator Rotator = GetCharacterFrontMagicCircleRotator();
-	FVector x = UKismetMathLibrary::GetForwardVector(Rotator);
-	FVector y = UKismetMathLibrary::GetRightVector(Rotator);
-	FVector z = UKismetMathLibrary::GetUpVector(Rotator);
-	Location = CastableStart + x * Offset.X + y * Offset.Y + z * Offset.Z;
-	return true;
-}
-
-bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
-{
-	//FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleCastableRange;
-	//FVector Block;
-	/*if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
-	{
-		Location = Block;
-		return false;
-	}*/
-	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * (SpringArm->TargetArmLength + ViewCamera->GetRelativeLocation().X);
-	FVector End = Start + ViewCamera->GetForwardVector() * (Offset.X + MagicCircleRange) + ViewCamera->GetRightVector() * Offset.Y + ViewCamera->GetUpVector() * Offset.Z;
-	
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(this);
-	FHitResult HitResult;
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
-	UKismetSystemLibrary::LineTraceSingleForObjects(
-		this,
-		Start,
-		End,
-		ObjectTypes,
-		false,
-		ActorsToIgnore,
-		EDrawDebugTrace::None,
-		HitResult,
-		true
-	);
-
-	if (HitResult.GetActor())
-	{
-		Location = HitResult.ImpactPoint + FVector::ZAxisVector;
-		if (HitResult.ImpactNormal.Dot(FVector::ZAxisVector) < FMath::Cos(FMath::DegreesToRadians(45)))
-		{
-			return false;
-		}
-		return true;
-	}
-
-	Location = End;
-	return false;
-}
-
-bool ABasePlayer::LocateFlyMagicCircle(FVector Offset, FVector& Location)
-{
-	//FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * MagicCircleCastableRange;
-	/*if (IsBlocked(ViewCamera->GetComponentLocation(), Start, Block))
-	{
-		Location = Block;
-		return false;
-	}*/
-	FVector Block;
-	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * (SpringArm->TargetArmLength + ViewCamera->GetRelativeLocation().X);
-	FVector End = Start + ViewCamera->GetForwardVector() * Offset.X + ViewCamera->GetRightVector() * Offset.Y + ViewCamera->GetUpVector() * Offset.Z;
-	if (IsBlocked(Start, End, Block))
-	{
-		Location = Block + FVector::ZAxisVector;
-	}
-	else
-	{
-		Location = End;
-	}
-
-	return true;
-}
-/// <summary>
-/// LineTrace로 두 위치 사이에 Actor가 있는지 확인한다.
-/// </summary>
-/// <param name="Start">첫번째 위치</param>
-/// <param name="End">두번째 위치</param>
-/// <param name="BlockedLocation">막힌 위치를 반환한다. 막히지 않았을 경우 End위치를 반환한다.</param>
-/// <returns></returns>
-bool ABasePlayer::IsBlocked(FVector Start, FVector End, FVector& BlockedLocation, TArray<AActor*> ActorsToIgnore)
-{
-	ActorsToIgnore.Add(this);
-	FHitResult HitResult;
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
-	UKismetSystemLibrary::LineTraceSingleForObjects(
-		this,
-		Start,
-		End,
-		ObjectTypes,
-		false,
-		ActorsToIgnore,
-		EDrawDebugTrace::None,
-		HitResult,
-		true
-	);
-	if (HitResult.GetActor())
-	{
-		BlockedLocation = HitResult.ImpactPoint;
-		return true;
-	}
-	BlockedLocation = End;
-	return false;
-}
-
-bool ABasePlayer::IsCoolDown(FTimerHandle& CoolTimer)
-{
-	return GetWorldTimerManager().GetTimerRemaining(CoolTimer) < 0;
-}
-
-bool ABasePlayer::IsElementSeleted()
-{
-	return ElementsSelectedArray[0] != -1 && ElementsSelectedArray[1] != -1;
 }
 
 FRotator ABasePlayer::GetCharacterFrontMagicCircleRotator()
@@ -690,22 +576,67 @@ FRotator ABasePlayer::GetFlyMagicCircleRotator()
 	return Rotator;
 }
 
-void ABasePlayer::InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth)
+EFourElement ABasePlayer::GetSelectedElement(uint8 i)
 {
-	ElementsArray.SetNum(4);
-	ElementsArray[0] = First;
-	ElementsArray[1] = Second;
-	ElementsArray[2] = Third;
-	ElementsArray[3] = Forth;
+	if ((i < 0 || i > ElementsSelectedArray.Num()) || (ElementsSelectedArray[i] < 0 || ElementsSelectedArray[i] > ElementsArray.Num()))
+	{
+		return EFourElement::EPE_None;
+	}
+	return ElementsArray[ElementsSelectedArray[i]];
 }
 
-void ABasePlayer::InitElementsReadyArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth)
+void ABasePlayer::SetCurrMagicCircleDist(float Value)
 {
-	ElementsReadyArray.SetNum(4);
-	ElementsReadyArray[0] = First;
-	ElementsReadyArray[1] = Second;
-	ElementsReadyArray[2] = Third;
-	ElementsReadyArray[3] = Forth;
+	CurrMagicCircleDist = FMath::Clamp(Value, FlyMagicCircleCastableRange, MagicCircleRange);
+}
+
+void ABasePlayer::SetSelectedElement(uint8 i, EFourElement Element)
+{
+	if ((i < 0 || i > ElementsSelectedArray.Num()) && (ElementsSelectedArray[i] < 0 || ElementsSelectedArray[i] > ElementsArray.Num()))
+	{
+		return;
+	}
+	ElementsArray[ElementsSelectedArray[i]] = Element;
+}
+
+bool ABasePlayer::IsElementSeleted()
+{
+	return ElementsSelectedArray[0] != -1 && ElementsSelectedArray[1] != -1;
+}
+
+bool ABasePlayer::IsBlocked(FVector Start, FVector End, FHitResult& BlockingActor, TArray<AActor*> ActorsToIgnore)
+{
+	ActorsToIgnore.Add(this);
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
+	UKismetSystemLibrary::LineTraceSingleForObjects(
+		this,
+		Start,
+		End,
+		ObjectTypes,
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::None,
+		BlockingActor,
+		true
+	);
+	if (BlockingActor.GetActor())
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool ABasePlayer::IsCoolDown(FTimerHandle& CoolTimer)
+{
+	return GetWorldTimerManager().GetTimerRemaining(CoolTimer) < 0;
+}
+
+void ABasePlayer::IncreaseMagicCircleDistVariationSpeed()
+{
+	MagicCircleDistVariationSpeed = FMath::Clamp(MagicCircleDistVariationSpeed * 1.2f, 0, 50.0f);
 }
 
 void ABasePlayer::EmptyElementsSeletedArray()
@@ -750,119 +681,77 @@ void ABasePlayer::UseSelectedElements()
 	UpdateElementSlotUI();
 }
 
-void ABasePlayer::MagicII_FlameStrike()
+bool ABasePlayer::LocateCharacterFrontMagicCircle(FVector Offset, FVector& Location)
 {
-	UseFloorMagic(FlameStrikeCircle, FlameStrikeClass);
-}
-
-void ABasePlayer::MagicAA_HealOverTime()
-{
-	FVector CircleLocation = GetUnderCharacterFeetLocation();
-	UNiagaraComponent* SpawnedMagicCircle = SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, HealOverTimeCircle);
-	
-	HealOverTimeCharacter(AmountOfHealPerTime, HealCount, HealDelay);
-}
-
-void ABasePlayer::MagicVV_Piercing()
-{
-	FVector CircleLocation;
-	if (LocateCharacterFrontMagicCircle(FVector::ZeroVector, CircleLocation))
+	FVector Chest = GetChestLocation();
+	FVector CastableStart = GetCharacterFrontMagicCircle();
+	FHitResult Dummy;
+	if (IsBlocked(Chest, CastableStart, Dummy))
 	{
-		FRotator CircleRotator = GetCharacterFrontMagicCircleRotator();
-		SpawnMagicCircle(CircleLocation, CircleRotator, PiercingCircle);
-		SpawnMagicActor(CircleLocation, CircleRotator, PiercingClass);
+		return false;
 	}
+	FRotator Rotator = GetCharacterFrontMagicCircleRotator();
+	FVector x = UKismetMathLibrary::GetForwardVector(Rotator);
+	FVector y = UKismetMathLibrary::GetRightVector(Rotator);
+	FVector z = UKismetMathLibrary::GetUpVector(Rotator);
+	Location = CastableStart + x * Offset.X + y * Offset.Y + z * Offset.Z;
+	return true;
 }
 
-void ABasePlayer::MagicTT_Portal()
+bool ABasePlayer::LocateFloorMagicCircle(FVector Offset, FVector& Location)
 {
-	FVector MagicLocation;
-	if (LocateFlyMagicCircle(FVector::XAxisVector * CurrMagicCircleDist, MagicLocation))
+	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * (SpringArm->TargetArmLength + ViewCamera->GetRelativeLocation().X);
+	FVector End = Start + ViewCamera->GetForwardVector() * (Offset.X + MagicCircleRange) + ViewCamera->GetRightVector() * Offset.Y + ViewCamera->GetUpVector() * Offset.Z;
+
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(this);
+	FHitResult HitResult;
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
+	UKismetSystemLibrary::BoxTraceSingleForObjects(
+		this,
+		Start - ViewCamera->GetUpVector() * FloorMagicCircleBoxTraceHalf.Z,
+		End - ViewCamera->GetUpVector() * FloorMagicCircleBoxTraceHalf.Z,
+		FloorMagicCircleBoxTraceHalf,
+		ViewCamera->GetComponentRotation(),
+		ObjectTypes,
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::ForOneFrame,
+		HitResult,
+		true
+	);
+
+	if (HitResult.GetActor())
 	{
-		FRotator MagicRotator = GetFlyMagicCircleRotator();
-		APortal* Portal1 = Cast<APortal>(SpawnMagicActor(GetUnderCharacterFeetLocation(), MagicRotator, PortalClass));
-		APortal* Portal2 = Cast<APortal>(SpawnMagicActor(MagicLocation, MagicRotator, PortalClass));
-		Portal1->SetOutPortal(Portal2);
-		Portal2->SetOutPortal(Portal1);
+		Location = HitResult.ImpactPoint + FVector::ZAxisVector;
+		if (HitResult.ImpactNormal.Dot(FVector::ZAxisVector) < FMath::Cos(FMath::DegreesToRadians(45)))
+		{
+			return false;
+		}
+		return true;
 	}
+
+	Location = End;
+	return false;
 }
 
-void ABasePlayer::MagicIV_Explosion()
+bool ABasePlayer::LocateFlyMagicCircle(FVector Offset, FVector& Location)
 {
-	FVector CircleLocation;
-	if (LocateCharacterFrontMagicCircle(FVector::ZeroVector, CircleLocation))
+	FVector Start = ViewCamera->GetComponentLocation() + ViewCamera->GetForwardVector() * (SpringArm->TargetArmLength + ViewCamera->GetRelativeLocation().X);
+	FVector End = Start + ViewCamera->GetForwardVector() * Offset.X + ViewCamera->GetRightVector() * Offset.Y + ViewCamera->GetUpVector() * Offset.Z;
+	FHitResult Block;
+	if (IsBlocked(Start, End, Block))
 	{
-		FRotator CircleRotator = GetCharacterFrontMagicCircleRotator();
-		SpawnMagicCircle(CircleLocation, CircleRotator, ExplosionCircle);
-		SpawnMagicActor(CircleLocation, CircleRotator, ExplosionClass);
+		Location = Block.ImpactPoint + FVector::ZAxisVector;
 	}
-}
-
-void ABasePlayer::MagicVA_Tornado()
-{
-	UseFloorMagic(TornadoCircle, TornadoClass);
-}
-
-ABaseMagic* ABasePlayer::UseFloorMagic(UNiagaraSystem* MagicCircle, TSubclassOf<ABaseMagic> MagicClass)
-{
-	FVector CircleLocation;
-	if (LocateFloorMagicCircle(FVector::ZeroVector, CircleLocation))
+	else
 	{
-		SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, MagicCircle);
-		return SpawnMagicActor(CircleLocation, FRotator::ZeroRotator, MagicClass);
+		Location = End;
 	}
-	return nullptr;
-}
 
-void ABasePlayer::MagicAT_Summon()
-{
-	FVector CircleLocation;
-	if (LocateCharacterFrontMagicCircle(FVector::ZeroVector, CircleLocation))
-	{
-		FRotator CircleRotator = GetCharacterFrontMagicCircleRotator();
-		SpawnMagicCircle(CircleLocation, CircleRotator, SummonCircle);
-		ASummon* Servant = Cast<ASummon>(SpawnMagicActor(CircleLocation, CircleRotator, SummonClass));
-		FVector SummonLocation = SummonLocationCenter;
-		FVector Offset;
-		Offset.X = FMath::Rand();
-		Offset.Y = FMath::Rand();
-		Offset.Z = FMath::Rand();
-		Offset.Normalize();
-		SummonLocation += Offset * FMath::RandRange(0.0f, SummonLocationRadius);
-		Servant->SetLocationRelatedWithOwner(SummonLocation);
-	}
-}
-
-void ABasePlayer::MagicTI_Meteorite()
-{
-	FVector TargetLocation;
-	if (LocateFloorMagicCircle(FVector::ZeroVector, TargetLocation))
-	{
-		FVector CircleLocation = TargetLocation + MeteoriteSpawnOffset;
-		SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, MeteoriteCircle);
-		AMeteorite* Meteo = Cast<AMeteorite>(SpawnMagicActor(CircleLocation, FRotator::ZeroRotator, MeteoriteClass));
-		Meteo->SetProjectileRange(MeteoriteSpawnOffset.Length());
-	}
-}
-
-void ABasePlayer::CastEnd()
-{
-	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
-	CastedMagic = ECastedMagic::ECM_None;
-	CameraState = EPlayerCameraState::EPCS_ZoomOut;
-	UseSelectedElements();
-	FloorAimingActor->SetActorHiddenInGame(true);
-	FlyAimingActor->SetActorHiddenInGame(true);
-}
-
-void ABasePlayer::UpdateElementSlotUI()
-{
-	TArray<EFourElement> SelectedArray;
-	for (int i = 0; i < ElementsSelectedArray.Num(); ++i)
-	{
-		SelectedArray.Add(GetSelectedElement(i));
-	}
-	PlayerOverlay->SetElementSlots(ElementsArray, ElementsReadyArray, SelectedArray);
+	return true;
 }
 
 ABaseAiming* ABasePlayer::SpawnAimingActor(TSubclassOf<ABaseAiming> AimingClass)
@@ -884,7 +773,7 @@ UNiagaraComponent* ABasePlayer::SpawnMagicCircle(FVector Location, FRotator Rota
 	UWorld* World = GetWorld();
 	if (World && MagicCircle)
 	{
-		return UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, MagicCircle ,Location, Rotator);
+		return UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, MagicCircle, Location, Rotator);
 	}
 	return nullptr;
 }
@@ -934,15 +823,107 @@ void ABasePlayer::ShowFlyAimingCircle()
 	}
 }
 
-void ABasePlayer::InitPlayerOverlay()
+ABaseMagic* ABasePlayer::UseFloorMagic(UNiagaraSystem* MagicCircle, TSubclassOf<ABaseMagic> MagicClass)
 {
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	if (PlayerController)
+	FVector CircleLocation;
+	if (LocateFloorMagicCircle(FVector::ZeroVector, CircleLocation))
 	{
-		APlayerHUD* PlayerHUD = Cast<APlayerHUD>(PlayerController->GetHUD());
-		if (PlayerHUD)
-		{
-			PlayerOverlay = Cast<UPlayerOverlay>(PlayerHUD->GetPlayerOverlay());
-		}
+		SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, MagicCircle);
+		return SpawnMagicActor(CircleLocation, FRotator::ZeroRotator, MagicClass);
+	}
+	return nullptr;
+}
+
+void ABasePlayer::CastEnd()
+{
+	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
+	CastedMagic = ECastedMagic::ECM_None;
+	CameraState = EPlayerCameraState::EPCS_ZoomOut;
+	UseSelectedElements();
+	FloorAimingActor->SetActorHiddenInGame(true);
+	FlyAimingActor->SetActorHiddenInGame(true);
+}
+
+void ABasePlayer::MagicII_FlameStrike()
+{
+	UseFloorMagic(FlameStrikeCircle, FlameStrikeClass);
+}
+
+void ABasePlayer::MagicAA_HealOverTime()
+{
+	FVector CircleLocation = GetUnderCharacterFeetLocation();
+	UNiagaraComponent* SpawnedMagicCircle = SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, HealOverTimeCircle);
+
+	HealOverTimeCharacter(AmountOfHealPerTime, HealCount, HealDelay);
+}
+
+void ABasePlayer::MagicVV_Piercing()
+{
+	FVector CircleLocation;
+	if (LocateCharacterFrontMagicCircle(FVector::ZeroVector, CircleLocation))
+	{
+		FRotator CircleRotator = GetCharacterFrontMagicCircleRotator();
+		SpawnMagicCircle(CircleLocation, CircleRotator, PiercingCircle);
+		SpawnMagicActor(CircleLocation, CircleRotator, PiercingClass);
+	}
+}
+
+void ABasePlayer::MagicTT_Portal()
+{
+	FVector MagicLocation;
+	if (LocateFlyMagicCircle(FVector::XAxisVector * CurrMagicCircleDist, MagicLocation))
+	{
+		FRotator MagicRotator = GetFlyMagicCircleRotator();
+		APortal* Portal1 = Cast<APortal>(SpawnMagicActor(GetUnderCharacterFeetLocation(), MagicRotator, PortalClass));
+		APortal* Portal2 = Cast<APortal>(SpawnMagicActor(MagicLocation, MagicRotator, PortalClass));
+		Portal1->SetOutPortal(Portal2);
+		Portal2->SetOutPortal(Portal1);
+	}
+}
+
+void ABasePlayer::MagicIV_Explosion()
+{
+	FVector CircleLocation;
+	if (LocateCharacterFrontMagicCircle(FVector::ZeroVector, CircleLocation))
+	{
+		FRotator CircleRotator = GetCharacterFrontMagicCircleRotator();
+		SpawnMagicCircle(CircleLocation, CircleRotator, ExplosionCircle);
+		SpawnMagicActor(CircleLocation, CircleRotator, ExplosionClass);
+	}
+}
+
+void ABasePlayer::MagicVA_Tornado()
+{
+	UseFloorMagic(TornadoCircle, TornadoClass);
+}
+
+void ABasePlayer::MagicAT_Summon()
+{
+	FVector CircleLocation;
+	if (LocateCharacterFrontMagicCircle(FVector::ZeroVector, CircleLocation))
+	{
+		FRotator CircleRotator = GetCharacterFrontMagicCircleRotator();
+		SpawnMagicCircle(CircleLocation, CircleRotator, SummonCircle);
+		ASummon* Servant = Cast<ASummon>(SpawnMagicActor(CircleLocation, CircleRotator, SummonClass));
+		FVector SummonLocation = SummonLocationCenter;
+		FVector Offset;
+		Offset.X = FMath::Rand();
+		Offset.Y = FMath::Rand();
+		Offset.Z = FMath::Rand();
+		Offset.Normalize();
+		SummonLocation += Offset * FMath::RandRange(0.0f, SummonLocationRadius);
+		Servant->SetLocationRelatedWithOwner(SummonLocation);
+	}
+}
+
+void ABasePlayer::MagicTI_Meteorite()
+{
+	FVector TargetLocation;
+	if (LocateFloorMagicCircle(FVector::ZeroVector, TargetLocation))
+	{
+		FVector CircleLocation = TargetLocation + MeteoriteSpawnOffset;
+		SpawnMagicCircle(CircleLocation, FRotator::ZeroRotator, MeteoriteCircle);
+		AMeteorite* Meteo = Cast<AMeteorite>(SpawnMagicActor(CircleLocation, FRotator::ZeroRotator, MeteoriteClass));
+		Meteo->SetProjectileRange(MeteoriteSpawnOffset.Length());
 	}
 }

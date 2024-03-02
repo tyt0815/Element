@@ -100,10 +100,10 @@ private:
 	* Camera
 	*/
 public:
-	FORCEINLINE FVector GetCameraForwardVector();
-	FORCEINLINE FRotator GetCameraRotation();
+	FORCEINLINE FVector GetCameraForwardVector() const;
+	FORCEINLINE FRotator GetCameraRotation() const;
 	FORCEINLINE FVector GetCameraRelativeLocation() const;
-	FVector GetCameraLookAtLocation();
+	FVector GetCameraLookAtLocation() const;
 
 protected:
 	void SwitchCameraLocation();
@@ -116,7 +116,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly);
 	USpringArmComponent* SpringArm;
 private:
-
 	UPROPERTY(EditAnywhere, Category = "Attributes | ViewCamera");
 	float LookAtOffset = 5000.0f;
 
@@ -183,7 +182,6 @@ private:
 	*/
 public:
 	void InitMagicCircleDistVariationSpeed();
-	void IncreaseMagicCircleDistVariationSpeed();
 	void InitElementsArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
 	void InitElementsReadyArray(EFourElement First, EFourElement Second, EFourElement Third, EFourElement Forth);
 	FVector GetChestLocation();
@@ -194,8 +192,9 @@ public:
 	void SetCurrMagicCircleDist(float Value);
 	void SetSelectedElement(uint8 i, EFourElement Element);
 	bool IsElementSeleted();
-	bool IsBlocked(FVector Start, FVector End, FVector& BlockedLocation, TArray<AActor*> ActorsToIgnore = TArray<AActor*>());
+	bool IsBlocked(FVector Start, FVector End, FHitResult& BlockingActor, TArray<AActor*> ActorsToIgnore = TArray<AActor*>());
 	bool IsCoolDown(FTimerHandle& CoolTimer);
+	void IncreaseMagicCircleDistVariationSpeed();
 	void EmptyElementsSeletedArray();
 	void SelectElement(uint8 Index);
 	void UseSelectedElements();
@@ -237,7 +236,11 @@ private:
 	float FlyMagicCircleCastableRange = 150.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Attributes | Magic | MagicCircle");
-	float MagicCircleRange = 2000.0f; // Fly, Floor 모두 적용
+	FVector FloorMagicCircleBoxTraceHalf = FVector(0.0f, 0.0f, 50.0f);
+
+	/*Fly, Floor MagicCircle*/
+	UPROPERTY(EditAnywhere, Category = "Attributes | Magic | MagicCircle");
+	float MagicCircleRange = 2000.0f; 
 
 	UPROPERTY(EditAnywhere, Category = "Attributes | Magic | Magic Bullet");
 	UNiagaraSystem* MagicBulletCircle;
