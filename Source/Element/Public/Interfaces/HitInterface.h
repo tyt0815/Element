@@ -22,5 +22,5 @@ class ELEMENT_API IHitInterface
 	
 public:
 	UFUNCTION(BlueprintNativeEvent)
-	void GetHit(const FVector& ImpactPoint, AActor* Hitter, enum EFourElement Element);
+	void GetHit(const FVector& ImpactPoint, AActor* Hitter, EFourElement Element);
 };

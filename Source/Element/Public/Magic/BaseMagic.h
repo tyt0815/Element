@@ -32,7 +32,7 @@ protected:
 public:
 	FORCEINLINE UBoxComponent* GetHitBoxComponent() const { return HitBoxComponent; }
 	virtual void InitActorsToIgnore();
-	virtual void InitBoxTraceObjectTypes();
+	virtual void InitHitTraceObjectTypes();
 protected:
 	FORCEINLINE float GetOwnerATK();
 	FORCEINLINE FVector GetOwnerLocation();
@@ -43,6 +43,7 @@ protected:
 	void BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore);
 	void DamageActor(FHitResult& HitResult, float Damage, EFourElement Element);
 	virtual void SetMultiStageHit(float Damage, float Delay, EFourElement Element);
+	void PushLiftableActor(AActor* Actor, FVector Force);
 
 
 	UFUNCTION()
@@ -85,7 +86,7 @@ protected:
 	FVector BoxTraceHalfSize;
 	TArray<AActor*> ActorsToIgnore;
 	FVector SpawnedLocation;
-	TArray<TEnumAsByte<EObjectTypeQuery>> BoxTraceObjectTypes;
+	TArray<TEnumAsByte<EObjectTypeQuery>> HitTraceObjectTypes;
 	FTimerHandle MultiStageHitTimer;
 
 	ABaseCharacter* Owner;

@@ -23,7 +23,7 @@ protected:
 	void TeleportActor(AActor* Actor);
 	virtual void EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
 	virtual void InitActorsToIgnore() override;
-	virtual void InitBoxTraceObjectTypes() override;
+	virtual void InitHitTraceObjectTypes() override;
 
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float PortalLifeTime;

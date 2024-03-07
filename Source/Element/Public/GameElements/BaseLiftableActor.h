@@ -17,10 +17,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	virtual void Interact_Implementation(AActor* InteractingActor) override;
+	UStaticMeshComponent* GetMesh() { return RootMesh; }
 	virtual FString GetInteractionHint_Implementation() const override;
-
+	virtual void Interact_Implementation(AActor* InteractingActor) override;
 	void LayDown();
+
+	UFUNCTION(BlueprintPure, Category = Random)
+	FORCEINLINE int MakeRandomSeed();
 
 	UFUNCTION(BlueprintPure, Category = Lift)
 	FORCEINLINE bool IsLifted() { return Lifted; }
@@ -31,6 +34,8 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* RootMesh;
+
+
 
 private:
 	void MoveToLiftedLocation(float DeltaTime);

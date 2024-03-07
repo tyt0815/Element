@@ -9,6 +9,7 @@
 
 #include "Interfaces/HitInterface.h"
 #include "Characters/BaseCharacter.h"
+#include "GameElements/BaseLiftableActor.h"
 
 ABaseMagic::ABaseMagic()
 {
@@ -49,7 +50,7 @@ void ABaseMagic::BeginPlay()
 	Super::BeginPlay();
 
 	InitActorsToIgnore();
-	InitBoxTraceObjectTypes();
+	InitHitTraceObjectTypes();
 
 	SpawnedLocation = GetActorLocation();
 	HitBoxComponent->IgnoreActorWhenMoving(GetOwner(), true);
@@ -115,7 +116,7 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult)
 		End,
 		BoxTraceHalfSize,
 		GetActorRotation(),
-		BoxTraceObjectTypes,
+		HitTraceObjectTypes,
 		false,
 		ActorsToIgnore,
 		EDrawDebugTrace::ForOneFrame,
@@ -138,7 +139,7 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore)
 		End,
 		BoxTraceHalfSize,
 		GetActorRotation(),
-		BoxTraceObjectTypes,
+		HitTraceObjectTypes,
 		false,
 		Ignore,
 		EDrawDebugTrace::None,
@@ -182,6 +183,15 @@ void ABaseMagic::SetMultiStageHit(float Damage, float Delay, EFourElement Elemen
 	GetWorldTimerManager().SetTimer(MultiStageHitTimer, MultiStageHitDelegate, Delay, true, Delay);
 }
 
+void ABaseMagic::PushLiftableActor(AActor* Actor, FVector Force)
+{
+	ABaseLiftableActor* LiftableActor = Cast<ABaseLiftableActor>(Actor);
+	if (LiftableActor && !LiftableActor->IsLifted())
+	{
+		LiftableActor->GetMesh()->AddForce(Force * 10000000.0f);
+	}
+}
+
 void ABaseMagic::MultiStageHit(float Damage, EFourElement Element)
 {
 	InitActorsToIgnore();
@@ -194,10 +204,11 @@ void ABaseMagic::MultiStageHit(float Damage, EFourElement Element)
 	}
 }
 
-void ABaseMagic::InitBoxTraceObjectTypes()
+void ABaseMagic::InitHitTraceObjectTypes()
 {
-	BoxTraceObjectTypes.Empty();
-	BoxTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
+	HitTraceObjectTypes.Empty();
+	HitTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
+	HitTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel3));
 }
 
 void ABaseMagic::EndMagic()

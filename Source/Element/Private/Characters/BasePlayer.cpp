@@ -396,6 +396,7 @@ void ABasePlayer::ZoomInCamera()
 
 void ABasePlayer::ShowInteractionWidget(bool WidgetShowed, AActor* InteractiveActor)
 {
+	if (!PlayerOverlay) return;
 	if (IsInteractiveActor(InteractiveActor))
 	{
 		PlayerOverlay->ShowInteractionWidget(WidgetShowed, IInteractionInterface::Execute_GetInteractionHint(InteractiveActor));
@@ -413,7 +414,10 @@ void ABasePlayer::UpdateElementSlotUI()
 	{
 		SelectedArray.Add(GetSelectedElement(i));
 	}
-	PlayerOverlay->SetElementSlots(ElementsArray, ElementsReadyArray, SelectedArray);
+	if (PlayerOverlay)
+	{
+		PlayerOverlay->SetElementSlots(ElementsArray, ElementsReadyArray, SelectedArray);
+	}
 }
 
 void ABasePlayer::InitPlayerOverlay()

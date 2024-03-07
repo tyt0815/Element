@@ -3,6 +3,7 @@
 
 #include "Element/DebugMacro.h"
 #include "Characters/BasePlayer.h"
+#include "GameElements/BaseLiftableActor.h"
 
 ABaseMagicProjectile::ABaseMagicProjectile(): ABaseMagic()
 {
@@ -35,4 +36,10 @@ double ABaseMagicProjectile::GetMovingDistance()
 void ABaseMagicProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ABaseMagicProjectile::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	Super::BeginBoxOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+	PushLiftableActor(OtherActor, GetActorForwardVector() * PushForce);
 }

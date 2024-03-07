@@ -48,7 +48,13 @@ void ITriggerInterface::InitTriggerTargets(TArray<AActor*>& TriggerTargets)
 {
 	for (auto TriggerTarget : TriggerTargets)
 	{
-		
-		IReactToTriggerInterface::Execute_AddTrigger(TriggerTarget, Cast<AActor>(this));
+		if (TriggerTarget->Implements<UReactToTriggerInterface>())
+		{
+			IReactToTriggerInterface::Execute_AddTrigger(TriggerTarget, Cast<AActor>(this));
+		}
+		else
+		{
+			TriggerTargets.Remove(TriggerTarget);
+		}
 	}
 }

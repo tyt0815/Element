@@ -56,9 +56,9 @@ void APortal::InitActorsToIgnore()
 	ActorsToIgnore.Empty();
 }
 
-void APortal::InitBoxTraceObjectTypes()
+void APortal::InitHitTraceObjectTypes()
 {
-	Super::InitBoxTraceObjectTypes();
-	BoxTraceObjectTypes.Empty();
-	BoxTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_PhysicsBody));
+	Super::InitHitTraceObjectTypes();
+	HitTraceObjectTypes.Empty();
+	HitTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_PhysicsBody));
 }

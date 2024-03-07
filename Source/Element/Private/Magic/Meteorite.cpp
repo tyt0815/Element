@@ -48,12 +48,12 @@ void AMeteorite::EndMagic()
 		UKismetSystemLibrary::SphereTraceSingleForObjects(
 			this,
 			GetActorLocation(),
-			GetActorLocation(),
+			GetActorLocation() - FVector::ZAxisVector,
 			SphereCollision->GetScaledSphereRadius() * ExplosionRadiusRate,
-			BoxTraceObjectTypes,
+			HitTraceObjectTypes,
 			false,
 			ActorsToIgnore,
-			EDrawDebugTrace::None,
+			EDrawDebugTrace::ForDuration,
 			HitResult,
 			true
 		);

@@ -76,3 +76,14 @@ void ABaseLiftableActor::LayDown()
 	RootMesh->SetSimulatePhysics(true);
 	Lifted = false;
 }
+
+int ABaseLiftableActor::MakeRandomSeed()
+{
+	FString Name = GetName();
+	int Seed = 1;
+	for (const auto C : Name)
+	{
+		Seed *= FMath::Max((C - Name[Name.Len() - 1]), 1);
+	}
+	return Seed;
+}

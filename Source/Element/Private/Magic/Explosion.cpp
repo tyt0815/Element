@@ -10,6 +10,7 @@
 void AExplosion::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag(TEXT("Magic"))) return;
+	Super::BeginBoxOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	HitBoxComponent->Deactivate();
 	ProjectileMovementComponent->Deactivate();
 	FHitResult HitResult;
@@ -22,8 +23,6 @@ void AExplosion::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 
 void AExplosion::Explosion()
 {
-	TArray<TEnumAsByte<EObjectTypeQuery>> SphereTraceObjectType;
-	SphereTraceObjectType.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
 	TArray<AActor*> ExplosionIgnore;
 	while(true)
 	{
@@ -33,7 +32,7 @@ void AExplosion::Explosion()
 			GetActorLocation(),
 			GetActorLocation(),
 			ExplosionRadius,
-			SphereTraceObjectType,
+			HitTraceObjectTypes,
 			false,
 			ExplosionIgnore,
 			EDrawDebugTrace::None,
@@ -42,6 +41,7 @@ void AExplosion::Explosion()
 		);
 		if (HitResult.GetActor() == nullptr) break;
 		ExplosionIgnore.Add(HitResult.GetActor());
+		PushLiftableActor(HitResult.GetActor(), GetActorForwardVector() * PushForce * 5);
 		DamageActor(HitResult, GetOwnerATK() * ExplosionDamageCoefficient, EFourElement::EPE_Ignis);
 	}
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ExplosionNiagara, GetActorLocation(), GetActorRotation());
