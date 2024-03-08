@@ -35,11 +35,9 @@ void ITriggerInterface::SignalToTargets(TArray<AActor*>& TriggerTargets)
 	}
 	for (auto TriggerTarget : TriggerTargets)
 	{
-		IReactToTriggerInterface* ReactTarget = Cast<IReactToTriggerInterface>(TriggerTarget);
-
-		if (ReactTarget)
+		if (TriggerTarget->Implements<UReactToTriggerInterface>())
 		{
-			ReactTarget->Execute_ReactToTrigger(TriggerTarget, SelfAsActor);
+			IReactToTriggerInterface::Execute_ReactToTrigger(TriggerTarget, SelfAsActor);
 		}
 	}
 }
@@ -48,7 +46,7 @@ void ITriggerInterface::InitTriggerTargets(TArray<AActor*>& TriggerTargets)
 {
 	for (auto TriggerTarget : TriggerTargets)
 	{
-		if (TriggerTarget->Implements<UReactToTriggerInterface>())
+		if (TriggerTarget && TriggerTarget->Implements<UReactToTriggerInterface>())
 		{
 			IReactToTriggerInterface::Execute_AddTrigger(TriggerTarget, Cast<AActor>(this));
 		}

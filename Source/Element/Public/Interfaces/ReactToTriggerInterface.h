@@ -25,9 +25,13 @@ public:
 	void AddTrigger(AActor* Trigger);
 	virtual void AddTrigger_Implementation(AActor* Trigger) { Triggers.Add(Trigger); }
 
-	UFUNCTION(BlueprintNativeEvent)
-	bool IsAllTriggersTriggered();
-	virtual bool IsAllTriggersTriggered_Implementation();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void IsAllTriggersTriggered(bool& Condition);
+	virtual void IsAllTriggersTriggered_Implementation(bool& Condition);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void IsAllTriggersTriggerOff(bool& Condition);
+	virtual void IsAllTriggersTriggerOff_Implementation(bool& Condition);
 
 private:
 	TArray<AActor*> Triggers;

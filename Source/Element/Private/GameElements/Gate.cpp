@@ -22,7 +22,9 @@ void AGate::BeginPlay()
 
 void AGate::ReactToTrigger_Implementation(AActor* Trigger)
 {
-	IReactToTriggerInterface::Execute_IsAllTriggersTriggered(this) ? OpenGate() : CloseGate();
+	bool Result;
+	IReactToTriggerInterface::Execute_IsAllTriggersTriggered(this, Result);
+	Result ? OpenGate() : CloseGate();
 }
 
 void AGate::OpenGate_Implementation()

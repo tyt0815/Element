@@ -23,7 +23,6 @@ protected:
 	virtual void InitTriggerInterface_Implementation(TArray<AActor*>& TriggerTargets);
 
 public:
-
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)
 	void Trigger(bool Condition, AActor* TriggeringActor, UPARAM(ref) TArray<AActor*>& TriggerTargets);
 	virtual void Trigger_Implementation(bool Condition, AActor* TriggeringActor, TArray<AActor*>& TriggerTargets);

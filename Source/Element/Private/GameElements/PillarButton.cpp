@@ -7,6 +7,7 @@ APillarButton::APillarButton()
 
 	RootMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RootMesh"));
 	SetRootComponent(RootMesh);
+	RootMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	ButtonMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ButtonMesh"));
 	ButtonMesh->SetupAttachment(GetRootComponent());
 	ButtonMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);

@@ -62,7 +62,7 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* RootSceneComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* StaticMeshComponent;
 
 	UPROPERTY(VisibleAnywhere);

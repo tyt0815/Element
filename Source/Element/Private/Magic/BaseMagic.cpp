@@ -119,7 +119,7 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult)
 		HitTraceObjectTypes,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForOneFrame,
+		EDrawDebugTrace::None,
 		HitResult,
 		true
 	);
