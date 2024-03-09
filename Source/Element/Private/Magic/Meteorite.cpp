@@ -34,7 +34,6 @@ void AMeteorite::Tick(float DeltaTime)
 void AMeteorite::BeginPlay()
 {
 	Super::BeginPlay();
-
 	SetMultiStageHit(GetOwnerATK() * DamageCoefficient, MSHDelay, EFourElement::EPE_Terra);
 }
 

@@ -3,6 +3,10 @@
 void AFlameStrike::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	FHitResult HitResult;
+	BoxTrace(HitResult);
+	DamageActor(HitResult, GetOwnerATK() * DamageCoefficient, EFourElement::EPE_Ignis);
 
 	SetLifeSpan(0.5f);
 }

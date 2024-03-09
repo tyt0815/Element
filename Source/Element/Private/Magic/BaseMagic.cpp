@@ -119,7 +119,7 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult)
 		HitTraceObjectTypes,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::None,
+		EDrawDebugTrace::ForDuration,
 		HitResult,
 		true
 	);
@@ -160,10 +160,9 @@ void ABaseMagic::DamageActor(FHitResult& HitResult, float Damage, EFourElement E
 {
 	if (HitResult.GetActor())
 	{
-		IHitInterface* HitInterface = Cast<IHitInterface>(HitResult.GetActor());
-		if (HitInterface)
+		if (HitResult.GetActor()->Implements<UHitInterface>())
 		{
-			HitInterface->Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner(), Element);
+			IHitInterface::Execute_GetHit(HitResult.GetActor(), HitResult.ImpactPoint, GetOwner(), Element);
 		}
 		UGameplayStatics::ApplyDamage(
 			HitResult.GetActor(),
@@ -177,10 +176,10 @@ void ABaseMagic::DamageActor(FHitResult& HitResult, float Damage, EFourElement E
 
 void ABaseMagic::SetMultiStageHit(float Damage, float Delay, EFourElement Element)
 {
+	SCREEN_LOG(1, FString::FromInt(Element));
 	FTimerDelegate MultiStageHitDelegate;
-	MultiStageHitDelegate.BindUFunction(this, FName("MultiStageHit"), Damage);
-	MultiStageHit(Damage, Element);
-	GetWorldTimerManager().SetTimer(MultiStageHitTimer, MultiStageHitDelegate, Delay, true, Delay);
+	MultiStageHitDelegate.BindUFunction(this, FName("MultiStageHit"), Damage, Element);
+	GetWorldTimerManager().SetTimer(MultiStageHitTimer, MultiStageHitDelegate, Delay, true, 0);
 }
 
 void ABaseMagic::PushLiftableActor(AActor* Actor, FVector Force)
@@ -194,6 +193,7 @@ void ABaseMagic::PushLiftableActor(AActor* Actor, FVector Force)
 
 void ABaseMagic::MultiStageHit(float Damage, EFourElement Element)
 {
+	SCREEN_LOG(2, FString::FromInt(Element));
 	InitActorsToIgnore();
 	while (true)
 	{

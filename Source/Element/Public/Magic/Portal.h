@@ -23,6 +23,9 @@ public:
 	FORCEINLINE APortal* GetOutPortal() { return OutPortal; }
 	
 	UFUNCTION(BlueprintCallable)
+	void ChangePortalColor();
+	
+	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool IsActivated() { return Activated; }
 
 	UFUNCTION(BlueprintCallable)
@@ -38,8 +41,10 @@ public:
 	void DeactivatePortal();
 	virtual void DeactivatePortal_Implementation();
 
-protected:
+	UFUNCTION(BlueprintCallable)
 	void TeleportActor(AActor* Actor);
+
+protected:
 	virtual void BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	virtual void EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;

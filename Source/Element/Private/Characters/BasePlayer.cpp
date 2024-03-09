@@ -386,7 +386,6 @@ void ABasePlayer::ZoomOutCamera()
 void ABasePlayer::ZoomInCamera()
 {
 	SpringArm->TargetArmLength = FMath::Lerp<float, float>(SpringArm->TargetArmLength, ZoomSpringArmLength, CameraMoveRate);
-	//TargetCameraLocation = FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), ZoomCameraLocation, CameraMoveRate);
 	TargetCameraLocation = OriginCameraLocation;
 	OriginCameraLocation.Y = ZoomCameraOffset;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
@@ -882,6 +881,7 @@ void ABasePlayer::MagicTT_Portal()
 		APortal* Portal2 = Cast<APortal>(SpawnMagicActor(MagicLocation, MagicRotator, PortalClass));
 		Portal1->SetOutPortal(Portal2);
 		Portal2->SetOutPortal(Portal1);
+		Portal1->TeleportActor(this);
 	}
 }
 

@@ -103,6 +103,7 @@ public:
 	FORCEINLINE FVector GetCameraForwardVector() const;
 	FORCEINLINE FRotator GetCameraRotation() const;
 	FORCEINLINE FVector GetCameraRelativeLocation() const;
+	FORCEINLINE void AddCameraRotation();
 	FVector GetCameraLookAtLocation() const;
 
 protected:
@@ -150,10 +151,12 @@ private:
 	* Actions
 	*/
 public:
+	FORCEINLINE EPlayerActionState GetPlayerActionState() { return PlayerActionState; }
 	FORCEINLINE void SetPlayerActionState(EPlayerActionState NewState) { PlayerActionState = NewState; }
 	FORCEINLINE void AddInteractionTarget(AActor* InteractiveActor) { InteractionTargets.Add(InteractiveActor); }
 	FORCEINLINE void RemoveInteractionTarget(AActor* InteractiveActor) { InteractionTargets.Remove(InteractiveActor); }
 	FORCEINLINE bool IsInteractiveActor(AActor* Actor) const;
+	FORCEINLINE AActor* GetTargetInteractiveActor() { return TargetInteractiveActor; }
 	void SetTargetInteractiveActor();
 
 private:

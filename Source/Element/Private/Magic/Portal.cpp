@@ -1,9 +1,13 @@
 #include "Magic/Portal.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetRenderingLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 
 #include "Element/DebugMacro.h"
+#include "Characters/BasePlayer.h"
+#include "Helper/MathHelper.h"
 
 APortal::APortal()
 {
@@ -18,9 +22,11 @@ APortal::APortal()
 	PortalBackMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	PortalFrontSceneCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("PortalFrontSceneCapture"));
 	PortalFrontSceneCapture->SetupAttachment(GetRootComponent());
+	PortalFrontSceneCapture->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
 	StaticMeshComponent->bHiddenInSceneCapture = true;
 	PortalBackSceneCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("PortalBackSceneCapture"));
 	PortalBackSceneCapture->SetupAttachment(GetRootComponent());
+	PortalBackSceneCapture->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
 	PortalBackMesh->bHiddenInSceneCapture = true;
 }
 
@@ -44,6 +50,17 @@ void APortal::BeginPlay()
 	PortalBackSceneCapture->CustomNearClippingPlane = FMath::Abs(PortalBackSceneCapture->GetRelativeLocation().X);
 
 	SetPortalRenderTarget();
+}
+
+void APortal::ChangePortalColor()
+{
+	static int8 PortalColorIndex = 0;
+	static TArray<FColor> PortalColor = { FColor::Red, FColor::Cyan, FColor::Green, FColor::Yellow };
+	if (PortalFrontDynamicMaterialInstance && PortalBackDynamicMaterialInstance)
+	{
+		PortalFrontDynamicMaterialInstance->SetVectorParameterValue(TEXT("PortalColor"), PortalColor[PortalColorIndex++]);
+		PortalBackDynamicMaterialInstance->SetVectorParameterValue(TEXT("PortalColor"), PortalColor[PortalColorIndex++]);
+	}
 }
 
 void APortal::SetOutPortal(APortal* Portal)
@@ -74,7 +91,6 @@ void APortal::ActivatePortal_Implementation()
 	HitBoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	StaticMeshComponent->SetVisibility(true);
 	PortalBackMesh->SetVisibility(true);
-	SCREEN_LOG(1, TEXT("Activate Portal"));
 }
 
 void APortal::DeactivatePortal_Implementation()
@@ -89,8 +105,33 @@ void APortal::TeleportActor(AActor* Actor)
 {
 	if (OutPortal == nullptr || Actor == nullptr) return;
 	OutPortal->AddActorsToIgnore(Actor);
+
 	FVector TeleportLocation = OutPortal->GetActorLocation() + Actor->GetActorLocation() - GetActorLocation();
 	Actor->SetActorLocation(TeleportLocation, false, nullptr, ETeleportType::TeleportPhysics);
+
+	FRotator TeleportRotation = OutPortal->GetActorRotation() - GetActorRotation();
+	ABasePlayer* Player = Cast<ABasePlayer>(Actor);
+	if (Player)
+	{
+		FRotator ControllerRotator = Player->GetController()->GetControlRotation() - Player->GetActorRotation();
+		Player->AddActorWorldRotation(TeleportRotation, false, nullptr, ETeleportType::TeleportPhysics);
+		ControllerRotator += Player->GetActorRotation();
+		SCREEN_LOG(0, ControllerRotator.ToString());
+		Player->GetController()->SetControlRotation(ControllerRotator);
+		if (Player->GetPlayerActionState() == EPlayerActionState::EPAS_Lifting)
+		{
+			Player->GetTargetInteractiveActor()->SetActorLocation(
+				Player->GetTargetInteractiveActor()->GetActorLocation() + (OutPortal->GetActorLocation() - GetActorLocation())
+			);
+		}
+		Player->GetCharacterMovement()->Velocity = TeleportRotation.RotateVector(Player->GetCharacterMovement()->Velocity);
+	}
+	else
+	{
+		Actor->AddActorWorldRotation(TeleportRotation, false, nullptr, ETeleportType::TeleportPhysics);
+	}
+	
+
 	ActorsToIgnore.Remove(Actor);
 }
 void APortal::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -121,7 +162,7 @@ void APortal::InitActorsToIgnore()
 
 void APortal::InitHitTraceObjectTypes()
 {
-	Super::InitHitTraceObjectTypes();
 	HitTraceObjectTypes.Empty();
 	HitTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_PhysicsBody));
+	HitTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel2));
 }
