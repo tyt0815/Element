@@ -1,6 +1,7 @@
 #include "Characters/BaseCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 #include "Element/DebugMacro.h"
 #include "Components/AttributeComponent.h"
@@ -24,6 +25,7 @@ ABaseCharacter::ABaseCharacter()
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Destructible, ECollisionResponse::ECR_Block);
+	GetCharacterMovement()->AirControl = 1.0f;
 
 	Attributes = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attribute"));
 }

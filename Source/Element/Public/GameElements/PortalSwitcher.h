@@ -23,5 +23,16 @@ protected:
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = Attributes)
 	TArray<AActor*> Switchers;
-private:
+
+	UPROPERTY(EditInstanceOnly, Category = Attributes)
+	UTextureRenderTarget2D* Portal1FrontRT;
+
+	UPROPERTY(EditInstanceOnly, Category = Attributes)
+	UTextureRenderTarget2D* Portal2FrontRT;
+
+	UPROPERTY(EditInstanceOnly, Category = Attributes)
+	UTextureRenderTarget2D* Portal1BackRT;
+
+	UPROPERTY(EditInstanceOnly, Category = Attributes)
+	UTextureRenderTarget2D* Portal2BackRT;
 };

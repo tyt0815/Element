@@ -1,5 +1,6 @@
 #include "GameElements/Gate.h"
 #include "Components/ArrowComponent.h"
+#include "Components/BoxComponent.h"
 
 #include "Interfaces/TriggerInterface.h"
 
@@ -11,13 +12,18 @@ AGate::AGate()
 	SetRootComponent(RootArrow);
 	GateMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GateMesh"));
 	GateMesh->SetupAttachment(GetRootComponent());
-	
+	GateMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
+	CollisionBox->SetupAttachment(GateMesh);
+	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	CollisionBox->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 }
 
 void AGate::BeginPlay()
 {
 	Super::BeginPlay();
-	OriginCollisionEnabled = GateMesh->GetCollisionEnabled();
+	OriginCollisionEnabled = CollisionBox->GetCollisionEnabled();
 }
 
 void AGate::ReactToTrigger_Implementation(AActor* Trigger)
@@ -29,10 +35,10 @@ void AGate::ReactToTrigger_Implementation(AActor* Trigger)
 
 void AGate::OpenGate_Implementation()
 {
-	GateMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AGate::CloseGate_Implementation()
 {
-	GateMesh->SetCollisionEnabled(OriginCollisionEnabled);
+	CollisionBox->SetCollisionEnabled(OriginCollisionEnabled);
 }

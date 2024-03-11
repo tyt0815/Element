@@ -14,6 +14,9 @@ class ELEMENT_API APiercing : public ABaseMagicProjectile
 {
 	GENERATED_BODY()
 
+public:
+	virtual void Tick(float DeltaTime) override;
+
 protected:
 	virtual void BeginPlay() override;
 

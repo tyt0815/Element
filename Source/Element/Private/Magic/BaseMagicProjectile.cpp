@@ -16,7 +16,7 @@ ABaseMagicProjectile::ABaseMagicProjectile(): ABaseMagic()
 void ABaseMagicProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	MovingDistance += GetMovingDistancePerTick(DeltaTime);
 	if (IsOverRange())
 	{
 		EndMagic();
@@ -25,17 +25,17 @@ void ABaseMagicProjectile::Tick(float DeltaTime)
 
 bool ABaseMagicProjectile::IsOverRange()
 {
-	return GetMovingDistance() > ProjectileRange;
-}
-
-double ABaseMagicProjectile::GetMovingDistance()
-{
-	return (SpawnedLocation - GetActorLocation()).Size();
+	return MovingDistance > ProjectileRange;
 }
 
 void ABaseMagicProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+double ABaseMagicProjectile::GetMovingDistancePerTick(float DeltaTime)
+{
+	return ProjectileMovementComponent->GetMaxSpeed() * DeltaTime;
 }
 
 void ABaseMagicProjectile::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

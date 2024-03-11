@@ -107,7 +107,6 @@ public:
 	FVector GetCameraLookAtLocation() const;
 
 protected:
-	void SwitchCameraLocation();
 	void ZoomOutCamera();
 	void ZoomInCamera();
 
@@ -124,13 +123,14 @@ private:
 	float ZoomSpringArmLength = 250.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Attributes | ViewCamera");
-	float ZoomCameraOffset = 40.0f;
+	FVector ZoomCameraOffset = FVector(0.0f, 40.0f, 0.0f);
 
 	UPROPERTY(EditAnywhere, Category = "Attributes | ViewCamera");
 	float CameraMoveRate = 0.1;
 
 	EPlayerCameraState CameraState = EPlayerCameraState::EPCS_ZoomOut;
 	float OriginSpringArmLength;
+	float TargetSpringArmLength;
 	FVector OriginCameraLocation;
 	FVector TargetCameraLocation;
 

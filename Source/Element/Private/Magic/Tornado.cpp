@@ -19,40 +19,15 @@ void ATornado::Tick(float DeltaTime)
 			ACharacter* Character = Cast<ACharacter>(HitResult.GetActor());
 			if (Character)
 			{
-				UCharacterMovementComponent* MovementComponent = Character->GetCharacterMovement();
-				if (MovementComponent)
-				{
-					MovementComponent->SetMovementMode(EMovementMode::MOVE_Flying);
-					if (!IsTopLocation(Character))
-					{
-						MovementComponent->AddInputVector(FVector::ZAxisVector);
-					}
-					else
-					{
-						MovementComponent->Velocity.Z = 0.0f;
-					}
-				}
+				Character->GetCharacterMovement()->Velocity.Z = UpSpeed;
 			}
 		}
 	}
 }
 
-bool ATornado::IsTopLocation(AActor* Actor)
-{
-	return Actor->GetActorLocation().Z >= TopLocation.Z - TopOffset;
-}
-
 void ATornado::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	ACharacter* Character = Cast<ACharacter>(OtherActor);
-	if (Character)
-	{
-		UCharacterMovementComponent* MovementComponent = Character->GetCharacterMovement();
-		if (MovementComponent)
-		{
-			MovementComponent->SetMovementMode(EMovementMode::MOVE_Flying);
-		}
-	}
+	MakeCharacterJump();
 }
 
 void ATornado::BeginPlay()
@@ -60,9 +35,10 @@ void ATornado::BeginPlay()
 	Super::BeginPlay();
 
 	SetLifeSpan(LifeTime);
-	TopLocation = GetActorLocation() + BoxTraceHalfSize.Z * 2;
 	FTimerHandle DOTTimer;
 	SetMultiStageHit(GetOwnerATK() * DamageCoefficient, MSHDelay, EFourElement::EPE_Aqua);
+
+	MakeCharacterJump();
 }
 
 void ATornado::EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -73,11 +49,23 @@ void ATornado::EndBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		UCharacterMovementComponent* MovementComponent = Character->GetCharacterMovement();
 		if (MovementComponent)
 		{
-			MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
-			if (IsTopLocation(Character))
-			{
-				MovementComponent->AddForce(UpForce * 10000000.0f * FVector::ZAxisVector);
-			}
+			MovementComponent->AddForce(PushUpForce * FVector::ZAxisVector);
+		}
+	}
+}
+
+void ATornado::MakeCharacterJump()
+{
+	TArray<FHitResult> HitResults;
+	TArray<AActor*> Ignores;
+	BoxTraceMulti(HitResults, Ignores);
+
+	for (auto& HitResult : HitResults)
+	{
+		ACharacter* Character = Cast<ACharacter>(HitResult.GetActor());
+		if (Character && Character->GetCharacterMovement()->Velocity.Z == 0.0f)
+		{
+			Character->GetCharacterMovement()->AddForce(10000000.0f * FVector::ZAxisVector);
 		}
 	}
 }

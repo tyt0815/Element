@@ -24,7 +24,7 @@ AMeteorite::AMeteorite()
 void AMeteorite::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (ProjectileRange - GetMovingDistance() < SphereCollision->GetScaledSphereRadius())
+	if (ProjectileRange - MovingDistance < SphereCollision->GetScaledSphereRadius())
 	{
 		CameraShakeComponent->Activate();
 		CameraShakeComponent->StartCameraShake(CameraShake);

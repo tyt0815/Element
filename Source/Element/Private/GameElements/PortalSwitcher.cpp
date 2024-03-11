@@ -28,13 +28,26 @@ void APortalSwitcher::ReactToTrigger_Implementation(AActor* Trigger)
 		}
 		if (Trigger == Switchers[i] && ITriggerInterface::Execute_IsTriggered(Switchers[i]))
 		{
-			if (!SwitchedPortals[i]) break;
-			SwitchedPortals[i]->SetActorLocation(GetActorLocation());
+			if (SwitchedPortals[i])
+			{
+				SwitchedPortals[i]->SetActorLocation(GetActorLocation());
+				SwitchedPortals[i]->SetActorRotation(GetActorRotation());
+				SwitchedPortals[i]->SetSceneCaptureRenderTarget(Portal1FrontRT, Portal1BackRT);
+				if (SwitchedPortals[i]->GetOutPortal()) SwitchedPortals[i]->GetOutPortal()->SetSceneCaptureRenderTarget(Portal2FrontRT, Portal2BackRT);
+			}
 		}
 		else
 		{
-			if (SwitchedPortals[i]->GetOutPortal()) SwitchedPortals[i]->SetActorLocation(SwitchedPortals[i]->GetOutPortal()->GetActorLocation());
-			else SwitchedPortals[i]->SetActorLocation(FVector::ZeroVector);
+			if (SwitchedPortals[i])
+			{
+				SwitchedPortals[i]->SetSceneCaptureRenderTarget(nullptr, nullptr);
+				if (SwitchedPortals[i]->GetOutPortal())
+				{
+					SwitchedPortals[i]->SetActorLocation(SwitchedPortals[i]->GetOutPortal()->GetActorLocation());
+					SwitchedPortals[i]->GetOutPortal()->SetSceneCaptureRenderTarget(nullptr, nullptr);
+				}
+				else SwitchedPortals[i]->SetActorLocation(FVector::ZAxisVector * 10000.0f);
+			}
 
 			if (Switchers[i]->Implements<UTriggerInterface>())
 			{

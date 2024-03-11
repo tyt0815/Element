@@ -37,13 +37,30 @@ protected:
 	FORCEINLINE float GetOwnerATK();
 	FORCEINLINE FVector GetOwnerLocation();
 	FORCEINLINE FRotator GetOwnerRotation();
+	FORCEINLINE FVector GetHitBoxTraceBackLocation();
+	FORCEINLINE FVector GetHitBoxTraceFrontLocation();
+	FORCEINLINE FVector GetHitBoxTraceLeftLocation();
+	FORCEINLINE FVector GetHitBoxTraceRightLocation();
+	FORCEINLINE FVector GetHitBoxTraceDownLocation();
+	FORCEINLINE FVector GetHitBoxTraceUpLocation();
+	FORCEINLINE FVector GetHitBoxTraceBackToFrontHalfSize();
+	FORCEINLINE FVector GetHitBoxTraceLeftToRightHalfSize();
+	FORCEINLINE FVector GetHitBoxTraceDownToUpHalfSize();
 	void AddActorsToIgnore(AActor* Actor);
 	void RemoveActorsToIgnore(AActor* Actor);
 	void BoxTrace(FHitResult& HitResult);
 	void BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore);
+	void BoxTraceMulti(TArray<FHitResult>& HitResults);
+	void BoxTraceMulti(TArray<FHitResult>& HitResults, TArray<AActor*>& Ignore);
 	void DamageActor(FHitResult& HitResult, float Damage, EFourElement Element);
+	void DamageActorMulti(TArray<FHitResult>& HitResults, float Damage, EFourElement Element);
 	virtual void SetMultiStageHit(float Damage, float Delay, EFourElement Element);
 	void PushLiftableActor(AActor* Actor, FVector Force);
+
+	virtual void MultiStageHit_v2(float Damage, EFourElement Element, float Delay);
+
+	UFUNCTION()
+	void RemoveFromActorsToIgnore(TArray<FHitResult> HitResults);
 
 
 	UFUNCTION()
@@ -71,23 +88,17 @@ protected:
 	UPROPERTY(VisibleAnywhere);
 	UArrowComponent* ArrowComponent;
 
-	UPROPERTY(VisibleAnywhere)
-	USceneComponent* BoxTraceStart;
-
-	UPROPERTY(VisibleAnywhere)
-	USceneComponent* BoxTraceEnd;
-
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float DamageCoefficient = 1;
 
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float RepulsiveForce = 1000.0f;
 
-	FVector BoxTraceHalfSize;
 	TArray<AActor*> ActorsToIgnore;
 	FVector SpawnedLocation;
 	TArray<TEnumAsByte<EObjectTypeQuery>> HitTraceObjectTypes;
 	FTimerHandle MultiStageHitTimer;
 
 	ABaseCharacter* Owner;
+
 };

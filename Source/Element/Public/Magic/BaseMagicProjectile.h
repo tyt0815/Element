@@ -15,7 +15,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	bool IsOverRange();
-	double GetMovingDistance();
 
 protected:
 	virtual void BeginPlay() override;
@@ -26,6 +25,7 @@ protected:
 public:
 	FORCEINLINE void SetProjectileRange(float Range) { ProjectileRange = Range; }
 protected:
+	double GetMovingDistancePerTick(float DeltaTime);
 	virtual void BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 
@@ -37,4 +37,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float PushForce = 5.0f;
+
+	double MovingDistance = 0.f;
 };

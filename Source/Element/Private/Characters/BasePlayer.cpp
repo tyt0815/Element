@@ -48,7 +48,8 @@ void ABasePlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	SwitchCameraLocation();
+	SpringArm->TargetArmLength = FMath::Lerp(SpringArm->TargetArmLength, TargetSpringArmLength, CameraMoveRate);
+	ViewCamera->SetRelativeLocation(FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), TargetCameraLocation, CameraMoveRate));
 
 	SetTargetInteractiveActor();
 }
@@ -105,17 +106,19 @@ void ABasePlayer::BeginPlay()
 		}
 	}
 
+	RunSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	OriginSpringArmLength = SpringArm->TargetArmLength;
 	OriginCameraLocation = ViewCamera->GetRelativeLocation();
+	
 	
 	FloorAimingActor = SpawnAimingActor(FloorAimingClass);
 	FlyAimingActor = SpawnAimingActor(FlyAimingClass);
 	CurrMagicCircleDist = MagicCircleRange;
 
-	RunSpeed = GetCharacterMovement()->MaxWalkSpeed;
 
 	InitPlayerOverlay();
-	UpdateElementSlotUI();
+	UpdateElementSlotUI(); 
+	ZoomOutCamera();
 }
 
 void ABasePlayer::AttackStarted(const FInputActionInstance& Instance)
@@ -124,7 +127,7 @@ void ABasePlayer::AttackStarted(const FInputActionInstance& Instance)
 	{
 		PlayerActionState = EPlayerActionState::EPAS_Casting;
 		CastedMagic = ECastedMagic::ECM_MagicBullet;
-		CameraState = EPlayerCameraState::EPCS_ZoomIn;
+		ZoomInCamera();
 	}
 }
 
@@ -153,7 +156,7 @@ void ABasePlayer::AttackTriggered(const FInputActionInstance& Instance)
 	{
 		PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 		CastedMagic = ECastedMagic::ECM_None;
-		CameraState = EPlayerCameraState::EPCS_ZoomOut;
+		ZoomOutCamera();
 	}
 }
 
@@ -193,7 +196,7 @@ void ABasePlayer::CastStarted(const FInputActionInstance& Instance)
 			break;
 		}
 		PlayerActionState = EPlayerActionState::EPAS_Casting;
-		CameraState = EPlayerCameraState::EPCS_ZoomIn;
+		ZoomInCamera();
 	}
 }
 
@@ -356,27 +359,9 @@ FVector ABasePlayer::GetCameraLookAtLocation() const
 	return ViewCamera->GetComponentLocation() + (ViewCamera->GetForwardVector() * LookAtOffset);
 }
 
-void ABasePlayer::SwitchCameraLocation()
-{
-	switch (CameraState)
-	{
-	case EPlayerCameraState::EPCS_ZoomOut:
-		ZoomOutCamera();
-		break;
-	case EPlayerCameraState::EPCS_ZoomIn:
-		ZoomInCamera();
-		break;
-	default:
-		return;
-		break;
-	}
-	ViewCamera->SetRelativeLocation(FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), TargetCameraLocation, CameraMoveRate));
-}
-
 void ABasePlayer::ZoomOutCamera()
 {
-	SpringArm->TargetArmLength = FMath::Lerp<float, float>(SpringArm->TargetArmLength, OriginSpringArmLength, CameraMoveRate);
-	TargetCameraLocation = FMath::Lerp<FVector, float>(ViewCamera->GetRelativeLocation(), OriginCameraLocation, CameraMoveRate);
+	TargetSpringArmLength = OriginSpringArmLength;
 	TargetCameraLocation = OriginCameraLocation;
 	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -385,9 +370,8 @@ void ABasePlayer::ZoomOutCamera()
 
 void ABasePlayer::ZoomInCamera()
 {
-	SpringArm->TargetArmLength = FMath::Lerp<float, float>(SpringArm->TargetArmLength, ZoomSpringArmLength, CameraMoveRate);
-	TargetCameraLocation = OriginCameraLocation;
-	OriginCameraLocation.Y = ZoomCameraOffset;
+	TargetSpringArmLength = ZoomSpringArmLength;
+	TargetCameraLocation = OriginCameraLocation + ZoomCameraOffset;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	bUseControllerRotationYaw = true;
@@ -559,7 +543,8 @@ FVector ABasePlayer::GetChestLocation()
 
 FVector ABasePlayer::GetCharacterFrontMagicCircle()
 {
-	return GetChestLocation() + ViewCamera->GetRightVector() * ZoomCameraOffset + (GetActorForwardVector() * CharacterFrontCastableRange);
+	//return GetChestLocation() + ViewCamera->GetRightVector() * ZoomCameraOffset + (GetActorForwardVector() * CharacterFrontCastableRange);
+	return GetActorLocation() + TargetCameraLocation + ViewCamera->GetForwardVector() * CharacterFrontCastableRange;
 }
 
 FRotator ABasePlayer::GetCharacterFrontMagicCircleRotator()
@@ -841,7 +826,7 @@ void ABasePlayer::CastEnd()
 {
 	PlayerActionState = EPlayerActionState::EPAS_Unoccupied;
 	CastedMagic = ECastedMagic::ECM_None;
-	CameraState = EPlayerCameraState::EPCS_ZoomOut;
+	ZoomOutCamera();
 	UseSelectedElements();
 	FloorAimingActor->SetActorHiddenInGame(true);
 	FlyAimingActor->SetActorHiddenInGame(true);

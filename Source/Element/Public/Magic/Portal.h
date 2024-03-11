@@ -18,9 +18,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	FORCEINLINE UTextureRenderTarget2D* GetPortalFrontRenderTarget() { return PortalFrontRenderTarget; }
-	FORCEINLINE UTextureRenderTarget2D* GetPortalBackRenderTarget() { return PortalBackRenderTarget; }
 	FORCEINLINE APortal* GetOutPortal() { return OutPortal; }
+	void SetSceneCaptureRenderTarget(UTextureRenderTarget2D* RenderTarget1, UTextureRenderTarget2D* RenderTarget2);
 	
 	UFUNCTION(BlueprintCallable)
 	void ChangePortalColor();
@@ -29,9 +28,7 @@ public:
 	FORCEINLINE bool IsActivated() { return Activated; }
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE void SetOutPortal(APortal* Portal);
-
-	void SetPortalRenderTarget();
+	FORCEINLINE void SetOutPortal(APortal* Portal) { OutPortal = Portal; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ActivatePortal();
@@ -51,26 +48,14 @@ protected:
 	virtual void InitActorsToIgnore() override;
 	virtual void InitHitTraceObjectTypes() override;
 
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* PortalBackMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* PortalFrontMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USceneCaptureComponent2D* PortalFrontSceneCapture;
 
-	UPROPERTY(BlueprintReadWrite, Category = Attribute)
-	UTextureRenderTarget2D* PortalFrontRenderTarget;
-
-	UPROPERTY(BlueprintReadWrite, Category = Attribute)
-	UMaterialInstanceDynamic* PortalFrontDynamicMaterialInstance;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USceneCaptureComponent2D* PortalBackSceneCapture;
-
-	UPROPERTY(BlueprintReadWrite, Category = Attribute)
-	UTextureRenderTarget2D* PortalBackRenderTarget;
-
-	UPROPERTY(BlueprintReadWrite, Category = Attribute)
-	UMaterialInstanceDynamic* PortalBackDynamicMaterialInstance;
 
 	UPROPERTY(EditAnywhere, Category = Attribute)
 	float PortalLifeTime = 0.0f;

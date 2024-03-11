@@ -27,7 +27,7 @@ void ATriggerByMagicActor::BeginPlay()
 
 void ATriggerByMagicActor::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter, EFourElement Element)
 {
-	//SCREEN_LOG(Element, FString::FromInt(Element));
+	SCREEN_LOG(Element, FString::FromInt(Element));
 	if (Element == TriggerElement)
 	{
 		ITriggerInterface::Execute_Trigger(this, true, Hitter, Targets);

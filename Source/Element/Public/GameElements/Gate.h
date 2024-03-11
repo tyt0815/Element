@@ -39,6 +39,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* GateMesh;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UBoxComponent* CollisionBox;
+
 private:
 	ECollisionEnabled::Type OriginCollisionEnabled;
 };

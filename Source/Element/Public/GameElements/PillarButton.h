@@ -32,6 +32,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* ButtonMesh;
 
-	UPROPERTY(EditInstanceOnly)
+	UPROPERTY(EditInstanceOnly, Category = Attributes)
 	TArray<AActor*> TriggerTargets;
 };

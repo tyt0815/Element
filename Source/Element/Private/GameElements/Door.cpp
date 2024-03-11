@@ -30,7 +30,7 @@ float ADoor::GetOpenDirection(AActor* OpeningActor) const
 	{
 		FVector StartVector = GetActorLocation();
 		FVector A = GetActorForwardVector(), B = OpeningActor->GetActorLocation() - StartVector;
-		double Degree = FMath::RadiansToDegrees(MathHelper::GetAngleBetweenTwoVectors(A, B));
+		double Degree = FMath::RadiansToDegrees(MathHelper::GetAngleBetweenTwoVectorsByRadians(A, B));
 		if (Degree < 90.0f)
 		{
 			OpenDirection *= -1.0f;

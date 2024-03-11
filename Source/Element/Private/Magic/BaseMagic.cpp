@@ -34,10 +34,6 @@ ABaseMagic::ABaseMagic()
 	HitBoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 	ArrowComponent->SetupAttachment(GetRootComponent());
-	BoxTraceStart = CreateDefaultSubobject<USceneComponent>(TEXT("BoxTraceStart"));
-	BoxTraceStart->SetupAttachment(GetRootComponent());
-	BoxTraceEnd = CreateDefaultSubobject<USceneComponent>(TEXT("BoxTraceEnd"));
-	BoxTraceEnd->SetupAttachment(GetRootComponent());
 }
 
 void ABaseMagic::Tick(float DeltaTime)
@@ -55,10 +51,6 @@ void ABaseMagic::BeginPlay()
 	SpawnedLocation = GetActorLocation();
 	HitBoxComponent->IgnoreActorWhenMoving(GetOwner(), true);
 	Tags.Add(TEXT("Magic"));
-
-	BoxTraceStart->SetRelativeLocation(HitBoxComponent->GetRelativeLocation() + FVector(-HitBoxComponent->GetScaledBoxExtent().X, 0.0f, 0.0f));
-	BoxTraceEnd->SetRelativeLocation(HitBoxComponent->GetRelativeLocation() + FVector(HitBoxComponent->GetScaledBoxExtent().X, 0.0f, 0.0f));
-	BoxTraceHalfSize = FVector(0.0f, HitBoxComponent->GetScaledBoxExtent().Y, HitBoxComponent->GetScaledBoxExtent().Z);
 
 	HitBoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ABaseMagic::BeginBoxOverlap);
 	HitBoxComponent->OnComponentEndOverlap.AddDynamic(this, &ABaseMagic::EndBoxOverlap);
@@ -90,6 +82,51 @@ FRotator ABaseMagic::GetOwnerRotation()
 	return Owner ? Owner->GetActorRotation() : FRotator();
 }
 
+FVector ABaseMagic::GetHitBoxTraceBackLocation()
+{
+	return HitBoxComponent->GetComponentLocation() - GetActorForwardVector() * HitBoxComponent->GetScaledBoxExtent().X;
+}
+
+FVector ABaseMagic::GetHitBoxTraceFrontLocation()
+{
+	return HitBoxComponent->GetComponentLocation() + GetActorForwardVector() * HitBoxComponent->GetScaledBoxExtent().X;
+}
+
+FVector ABaseMagic::GetHitBoxTraceLeftLocation()
+{
+	return HitBoxComponent->GetComponentLocation() - GetActorRightVector() * HitBoxComponent->GetScaledBoxExtent().Y;
+}
+
+FVector ABaseMagic::GetHitBoxTraceRightLocation()
+{
+	return HitBoxComponent->GetComponentLocation() + GetActorRightVector() * HitBoxComponent->GetScaledBoxExtent().Y;
+}
+
+FVector ABaseMagic::GetHitBoxTraceDownLocation()
+{
+	return HitBoxComponent->GetComponentLocation() - GetActorUpVector() * HitBoxComponent->GetScaledBoxExtent().Z;
+}
+
+FVector ABaseMagic::GetHitBoxTraceUpLocation()
+{
+	return HitBoxComponent->GetComponentLocation() + GetActorUpVector() * HitBoxComponent->GetScaledBoxExtent().Z;
+}
+
+FVector ABaseMagic::GetHitBoxTraceBackToFrontHalfSize()
+{
+	return FVector(0.0f, HitBoxComponent->GetScaledBoxExtent().Y, HitBoxComponent->GetScaledBoxExtent().Z);
+}
+
+FVector ABaseMagic::GetHitBoxTraceLeftToRightHalfSize()
+{
+	return FVector(HitBoxComponent->GetScaledBoxExtent().X, 0.0f, HitBoxComponent->GetScaledBoxExtent().Z);
+}
+
+FVector ABaseMagic::GetHitBoxTraceDownToUpHalfSize()
+{
+	return FVector(HitBoxComponent->GetScaledBoxExtent().X, HitBoxComponent->GetScaledBoxExtent().Y, 0.0f);
+}
+
 void ABaseMagic::AddActorsToIgnore(AActor* Actor)
 {
 	if (Actor)
@@ -108,18 +145,16 @@ void ABaseMagic::RemoveActorsToIgnore(AActor* Actor)
 
 void ABaseMagic::BoxTrace(FHitResult& HitResult)
 {
-	FVector Start = BoxTraceStart->GetComponentLocation();
-	FVector End = BoxTraceEnd->GetComponentLocation();
 	UKismetSystemLibrary::BoxTraceSingleForObjects(
 		this,
-		Start,
-		End,
-		BoxTraceHalfSize,
+		GetHitBoxTraceBackLocation(),
+		GetHitBoxTraceFrontLocation(),
+		GetHitBoxTraceBackToFrontHalfSize(),
 		GetActorRotation(),
 		HitTraceObjectTypes,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		HitResult,
 		true
 	);
@@ -131,13 +166,11 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult)
 
 void ABaseMagic::BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore)
 {
-	FVector Start = BoxTraceStart->GetComponentLocation();
-	FVector End = BoxTraceEnd->GetComponentLocation();
 	UKismetSystemLibrary::BoxTraceSingleForObjects(
 		this,
-		Start,
-		End,
-		BoxTraceHalfSize,
+		GetHitBoxTraceBackLocation(),
+		GetHitBoxTraceFrontLocation(),
+		GetHitBoxTraceBackToFrontHalfSize(),
 		GetActorRotation(),
 		HitTraceObjectTypes,
 		false,
@@ -149,6 +182,32 @@ void ABaseMagic::BoxTrace(FHitResult& HitResult, TArray<AActor*>& Ignore)
 	if (HitResult.GetActor())
 	{
 		Ignore.Add(HitResult.GetActor());
+	}
+}
+
+void ABaseMagic::BoxTraceMulti(TArray<FHitResult>& HitResults)
+{
+	BoxTraceMulti(HitResults, ActorsToIgnore);
+}
+
+void ABaseMagic::BoxTraceMulti(TArray<FHitResult>& HitResults, TArray<AActor*>& Ignore)
+{
+	UKismetSystemLibrary::BoxTraceMultiForObjects(
+		this,
+		GetHitBoxTraceBackLocation(),
+		GetHitBoxTraceFrontLocation(),
+		GetHitBoxTraceBackToFrontHalfSize(),
+		GetActorRotation(),
+		HitTraceObjectTypes,
+		false,
+		Ignore,
+		EDrawDebugTrace::None,
+		HitResults,
+		true
+	);
+	for (auto& HitResult : HitResults)
+	{
+		Ignore.AddUnique(HitResult.GetActor());
 	}
 }
 
@@ -174,6 +233,19 @@ void ABaseMagic::DamageActor(FHitResult& HitResult, float Damage, EFourElement E
 	}
 }
 
+void ABaseMagic::DamageActorMulti(TArray<FHitResult>& HitResults, float Damage, EFourElement Element)
+{
+	TArray<AActor*> HitedActors;
+	for (auto& HitResult : HitResults)
+	{
+		if (HitedActors.Find(HitResult.GetActor()) == INDEX_NONE)
+		{
+			HitedActors.AddUnique(HitResult.GetActor());
+			DamageActor(HitResult, Damage, Element);
+		}
+	}
+}
+
 void ABaseMagic::SetMultiStageHit(float Damage, float Delay, EFourElement Element)
 {
 	SCREEN_LOG(1, FString::FromInt(Element));
@@ -188,6 +260,26 @@ void ABaseMagic::PushLiftableActor(AActor* Actor, FVector Force)
 	if (LiftableActor && !LiftableActor->IsLifted())
 	{
 		LiftableActor->GetMesh()->AddForce(Force * 10000000.0f);
+	}
+}
+
+void ABaseMagic::MultiStageHit_v2(float Damage, EFourElement Element, float Delay)
+{
+	TArray<FHitResult> HitResults;
+	BoxTraceMulti(HitResults);
+	DamageActorMulti(HitResults, Damage, Element);
+
+	FTimerHandle RemoveTimer;
+	FTimerDelegate RemoveDelegate;
+	RemoveDelegate.BindUFunction(this, FName("RemoveFromActorsToIgnore"), HitResults);
+	GetWorldTimerManager().SetTimer(RemoveTimer, RemoveDelegate, Delay, false);
+}
+
+void ABaseMagic::RemoveFromActorsToIgnore(TArray<FHitResult> HitResults)
+{
+	for (auto& HitResult : HitResults)
+	{
+		ActorsToIgnore.Remove(HitResult.GetActor());
 	}
 }
 

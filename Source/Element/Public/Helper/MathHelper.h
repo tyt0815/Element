@@ -10,5 +10,6 @@
 class ELEMENT_API MathHelper
 {
 public:
-	static double GetAngleBetweenTwoVectors(FVector A, FVector B);
+	static double GetAngleBetweenTwoVectorsByRadians(FVector A, FVector B);
+	static double GetAngleBetweenTwoVectorsByDegree(FVector A, FVector B);
 };
